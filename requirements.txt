@@ -1,6 +1,6 @@
 
 streamlit>=1.39
-Groq>=0.11
+groq>=0.11
 ddgs>=9
 edge-tts>=7
 pypdf>=5
