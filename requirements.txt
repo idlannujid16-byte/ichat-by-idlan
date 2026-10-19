@@ -1,5 +1,8 @@
 
 streamlit>=1.39
-groq>=0.11
+Groq>=0.11
 ddgs>=9
 edge-tts>=7
+pypdf>=5
+python-docx>=1.1
+Pillow>=10
