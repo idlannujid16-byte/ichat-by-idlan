@@ -3,16 +3,13 @@ import asyncio
 import base64
 import html
 import io
-import json
 import re
 import tempfile
-
 from pathlib import Path
 from urllib.parse import quote_plus, urlparse
 
 import streamlit as st
 from streamlit.components.v1 import declare_component
-
 from ddgs import DDGS
 from docx import Document
 from edge_tts import Communicate
@@ -21,21 +18,20 @@ from PIL import Image
 from pypdf import PdfReader
 
 
-# ====================================================
-# E.D.I.T.H - GALAXY NEURAL V2
+# ======================================================
+# E.D.I.T.H - GALAXY NEURAL V3
 #
-# MODE 1: CHAT ONLY
-# MODE 2: HOLOGRAPHIC VOICE CORE
-# MODE 3: 55 INTERACTIVE REACTIVE BUBBLES
+# MODE 1 - CHAT ONLY
+# MODE 2 - HOLOGRAPHIC VOICE CORE
+# MODE 3 - GALAXY NEURAL V3
 #
-# Features:
-# Groq / Voice Commands / Web Audio API
-# Memory / Chat History / Image & Document Reading
-# Search / AI Actions / Edit / Regenerate
-# Quantum Energy Flow / ChatGPT Style
+# 55 BUBBLES:
+# 20 APP LAUNCHERS + 35 AI SKILLS
 #
-# No Stop Generating button
-# ====================================================
+# All bubble names are INSIDE each bubble.
+# Real Web Audio API reactive animation.
+# Clickable app links and AI commands.
+# ======================================================
 
 st.set_page_config(
     page_title="E.D.I.T.H",
@@ -44,44 +40,59 @@ st.set_page_config(
 )
 
 CHAT_MODEL = "openai/gpt-oss-20b"
-VISION_MODEL = (
-    "meta-llama/llama-4-scout-17b-16e-instruct"
-)
+VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 STT_MODEL = "whisper-large-v3-turbo"
 
 
-# ====================================================
+# ======================================================
 # 1. SESSION STATE
-# ====================================================
+# ======================================================
 
 if "rooms" not in st.session_state:
-    st.session_state.rooms = {
-        "Chat 1": []
-    }
+    st.session_state.rooms = {"Chat 1": []}
 
-DEFAULTS = {
+defaults = {
     "room": "Chat 1",
     "memory": "",
     "pending": False,
     "editing": None,
-    "bubble_event_seen": None,
-    "last_voice_signature": None,
+    "last_bubble_event": "",
+    "active_bubble": "",
+    "voice_record_id": ""
 }
 
-for key, value in DEFAULTS.items():
+for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
 
 def history():
-    return st.session_state.rooms[
-        st.session_state.room
-    ]
+    return st.session_state.rooms[st.session_state.room]
+
+
+def empty_assistant():
+    return {
+        "role": "assistant",
+        "content": "",
+        "sources": [],
+        "audio": None,
+        "emotion": "neutral",
+        "action": None
+    }
+
+
+def ask(text, search=False):
+    history().append({
+        "role": "user",
+        "content": text,
+        "force_search": search
+    })
+    history().append(empty_assistant())
+    st.session_state.pending = True
 
 
 def new_chat():
     i = 1
-
     while f"Chat {i}" in st.session_state.rooms:
         i += 1
 
@@ -89,114 +100,66 @@ def new_chat():
     st.session_state.rooms[name] = []
     st.session_state.room = name
     st.session_state.editing = None
-
-
-def ask(question, force_search=False):
-    history().append({
-        "role": "user",
-        "content": question,
-        "force_search": force_search
-    })
-
-    history().append({
-        "role": "assistant",
-        "content": "",
-        "sources": [],
-        "audio": None,
-        "emotion": "neutral",
-        "action": None,
-        "failed": False
-    })
-
-    st.session_state.pending = True
+    st.session_state.active_bubble = ""
 
 
 def regenerate():
-    messages = history()
+    data = history()
 
-    if messages and messages[-1]["role"] == "assistant":
-        messages.pop()
+    if data and data[-1]["role"] == "assistant":
+        data.pop()
 
-    if messages and messages[-1]["role"] == "user":
-        messages.append({
-            "role": "assistant",
-            "content": "",
-            "sources": [],
-            "audio": None,
-            "emotion": "neutral",
-            "action": None,
-            "failed": False
-        })
-
+    if data and data[-1]["role"] == "user":
+        data.append(empty_assistant())
         st.session_state.pending = True
 
 
-# ====================================================
-# 2. LANGUAGE
-# ====================================================
+# ======================================================
+# 2. LANGUAGE AND EMOTION
+# ======================================================
 
 def detect_language(text, setting):
     if setting == "Bahasa Melayu":
         return "ms"
-
     if setting == "English":
         return "en"
 
-    malay_words = {
-        "saya", "awak", "apa", "boleh", "tolong",
-        "kenapa", "nak", "tak", "macam", "bagaimana",
-        "siapa", "panggil", "telefon", "cari",
-        "buat", "lokasi", "pergi", "buka",
-        "terangkan", "ajarkan", "bagitahu",
-        "belajar", "kod", "soalan", "projek"
+    malay = {
+        "saya", "awak", "boleh", "tolong", "apa",
+        "macam", "mana", "nak", "tak", "buat",
+        "cari", "ajar", "belajar", "terangkan",
+        "projek", "bagaimana", "kenapa", "telefon",
+        "lokasi", "panggil", "berikan", "bantu"
     }
 
-    words = set(
-        re.findall(r"\w+", text.lower())
-    )
-
-    return (
-        "ms"
-        if words.intersection(malay_words)
-        else "en"
-    )
+    words = set(re.findall(r"\w+", text.lower()))
+    return "ms" if words & malay else "en"
 
 
 def emotion_for(text):
-    text = text.lower()
+    value = text.lower()
 
-    moods = {
-        "happy": [
-            "tahniah",
-            "bagus",
-            "excellent",
-            "congratulations",
-            "gembira"
-        ],
-        "sad": [
-            "sedih",
-            "takziah",
-            "sorry",
-            "condolences"
-        ],
-        "surprised": [
-            "wow",
-            "wah",
-            "amazing",
-            "menakjubkan"
-        ]
-    }
+    if any(w in value for w in [
+        "sedih", "takziah", "sorry", "dukacita"
+    ]):
+        return "sad"
 
-    for mood, words in moods.items():
-        if any(word in text for word in words):
-            return mood
+    if any(w in value for w in [
+        "tahniah", "bagus", "gembira", "excellent"
+    ]):
+        return "happy"
+
+    if any(w in value for w in [
+        "wow", "wah", "amazing", "menakjubkan"
+    ]):
+        return "surprised"
 
     return "neutral"
 
 
-# ====================================================
-# 3. VOICE SYNTHESIS
-# ====================================================
+# ======================================================
+# 3. TEXT TO SPEECH
+# ======================================================
 
 async def synthesize(text, lang):
     voice = (
@@ -205,161 +168,124 @@ async def synthesize(text, lang):
         else "en-US-JennyNeural"
     )
 
-    speech = Communicate(
+    speaker = Communicate(
         text=text[:1800],
         voice=voice
     )
 
-    output = bytearray()
+    result = bytearray()
 
-    async for item in speech.stream():
-        if item["type"] == "audio":
-            output.extend(item["data"])
+    async for packet in speaker.stream():
+        if packet["type"] == "audio":
+            result.extend(packet["data"])
 
-    return bytes(output)
+    return bytes(result)
 
 
-# ====================================================
-# 4. DOCUMENT READER
-# ====================================================
+# ======================================================
+# 4. DOCUMENT UPLOAD
+# ======================================================
 
 def read_document(upload):
     data = upload.getvalue()
 
     if len(data) > 8 * 1024 * 1024:
-        raise ValueError(
-            "Fail melebihi 8 MB"
-        )
+        raise ValueError("Maximum document size is 8 MB")
 
     filename = upload.name.lower()
 
     if filename.endswith(".pdf"):
-        reader = PdfReader(
-            io.BytesIO(data)
-        )
-
-        text = "\n".join(
-            page.extract_text() or ""
-            for page in reader.pages[:20]
+        reader = PdfReader(io.BytesIO(data))
+        content = "\n".join(
+            p.extract_text() or ""
+            for p in reader.pages[:20]
         )
 
     elif filename.endswith(".docx"):
-        document = Document(
-            io.BytesIO(data)
-        )
+        doc = Document(io.BytesIO(data))
 
-        parts = [
-            p.text
-            for p in document.paragraphs
-        ]
+        pieces = [p.text for p in doc.paragraphs]
 
-        for table in document.tables:
+        for table in doc.tables:
             for row in table.rows:
-                parts.append(
-                    " | ".join(
-                        cell.text
-                        for cell in row.cells
-                    )
+                pieces.append(
+                    " | ".join(cell.text for cell in row.cells)
                 )
 
-        text = "\n".join(parts)
+        content = "\n".join(pieces)
 
     else:
-        text = data.decode(
-            "utf-8",
-            errors="replace"
-        )
+        content = data.decode("utf-8", errors="replace")
 
-    return text[:12000]
+    return content[:12000]
 
 
-# ====================================================
-# 5. SEARCH ENGINE
-# ====================================================
+# ======================================================
+# 5. INTERNET SEARCH
+# ======================================================
 
 def search_web(question):
-    results = DDGS(
-        timeout=12
-    ).text(
+    results = DDGS(timeout=12).text(
         question,
         max_results=4
     ) or []
 
-    output = []
+    sources = []
 
     for item in results:
-        url = str(
-            item.get("href", "")
-        )
+        url = str(item.get("href", ""))
 
-        if urlparse(url).scheme not in (
-            "http",
-            "https"
-        ):
+        if urlparse(url).scheme not in ("http", "https"):
             continue
 
-        output.append({
-            "title": str(
-                item.get("title", "")
-            )[:120],
+        sources.append({
+            "title": str(item.get("title", ""))[:120],
             "url": url,
-            "snippet": str(
-                item.get("body", "")
-            )[:450]
+            "snippet": str(item.get("body", ""))[:450]
         })
 
-    return output
+    return sources
 
 
-# ====================================================
-# 6. AI ACTIONS
-# ====================================================
+# ======================================================
+# 6. VOICE / TEXT AI ACTIONS
+# ======================================================
 
 def action_for(text):
-    command = text.strip()
+    text = text.strip()
 
     phone = re.search(
-        r"(?:telefon|call|dial|panggil)"
-        r"\s+(?:nombor\s+|number\s+)?"
+        r"(?:telefon|call|dial|panggil)\s+"
+        r"(?:nombor\s+|number\s+)?"
         r"(\+?[\d][\d\s\-()]{6,}[\d])",
-        command,
+        text,
         re.I
     )
 
     if phone:
-        number = re.sub(
-            r"[^\d+]",
-            "",
-            phone.group(1)
-        )
+        number = re.sub(r"[^\d+]", "", phone.group(1))
 
-        if re.fullmatch(
-            r"\+?\d{7,15}",
-            number
-        ):
+        if re.fullmatch(r"\+?\d{7,15}", number):
             return {
-                "type": "dial",
+                "kind": "dial",
                 "label": "📞 Buka Phone: " + number,
                 "url": "tel:" + number
             }
 
     maps = re.search(
-        r"(?:navigate to|directions to|"
-        r"arah ke|pergi ke|lokasi|maps? ke)"
-        r"\s+(.+)",
-        command,
+        r"(?:lokasi|maps? ke|pergi ke|"
+        r"arah ke|navigate to|directions to)\s+(.+)",
+        text,
         re.I
     )
 
     if maps:
-        location = maps.group(1).strip(
-            " .?!"
-        )[:120]
+        location = maps.group(1).strip(" .?!")[:120]
 
         if location:
             return {
-                "type": "maps",
-                "label": "📍 Buka Google Maps",
+                "kind": "maps",
+                "label": "📍 Google Maps",
                 "url": (
                     "https://www.google.com/maps/"
                     "search/?api=1&query="
@@ -368,125 +294,200 @@ def action_for(text):
             }
 
     google = re.search(
-        r"^(?:google|search web|"
-        r"cari di google|cari web)"
-        r"\s+(.+)",
-        command,
+        r"^(?:cari di google|cari web|"
+        r"google|search web)\s+(.+)",
+        text,
         re.I
     )
 
     if google:
-        phrase = google.group(1).strip()[:150]
+        query = google.group(1).strip()[:150]
 
-        if phrase:
+        if query:
             return {
-                "type": "search",
-                "label": "🔎 Buka Google",
+                "kind": "search",
+                "label": "🔎 Google Search",
                 "url": (
                     "https://www.google.com/search?q="
-                    + quote_plus(phrase)
+                    + quote_plus(query)
                 )
             }
 
     return None
 
 
-# ====================================================
-# 7. GALAXY NEURAL BUBBLE COMMANDS
+# ======================================================
+# 7. FIFTY-FIVE INTERACTIVE BUBBLES
 #
-# 55 unique clickable bubbles.
+# FORMAT:
+# (Name, Icon, Type, Destination/Prompt)
 #
-# A click sends a structured event to Streamlit.
-# Streamlit then sends its prompt to Groq.
-#
-# "search" bubbles request web search too.
-# ====================================================
+# Types:
+# app    -> Show genuine clickable external link
+# ai     -> Send prompt to Groq
+# search -> Search web, then ask Groq
+# ======================================================
 
-BUBBLE_COMMANDS = [
-    # 1 - 10: General learning
-    ("AI Chat", "Terangkan apa yang boleh E.D.I.T.H bantu saya.", "prompt"),
-    ("Study", "Bantu saya belajar satu topik baharu secara berperingkat.", "prompt"),
-    ("Quiz", "Berikan saya kuiz pengetahuan am dengan 5 soalan.", "prompt"),
-    ("Math", "Ajar saya menyelesaikan masalah matematik dengan contoh.", "prompt"),
-    ("Science", "Terangkan satu konsep sains yang menarik.", "prompt"),
-    ("English", "Bantu saya berlatih bahasa Inggeris secara interaktif.", "prompt"),
-    ("Translate", "Terjemahkan contoh ayat bahasa Melayu kepada bahasa Inggeris.", "prompt"),
-    ("History", "Ceritakan satu peristiwa sejarah penting.", "prompt"),
-    ("Physics", "Terangkan hukum Newton menggunakan contoh mudah.", "prompt"),
-    ("Chemistry", "Ajar saya asas kimia dengan contoh.", "prompt"),
+BUBBLES = [
 
-    # 11 - 20: Programming
-    ("Python", "Ajar saya Python daripada asas dengan contoh coding.", "prompt"),
-    ("Arduino", "Ajar saya projek Arduino untuk pemula.", "prompt"),
-    ("ESP32", "Cadangkan satu projek ESP32 dengan coding.", "prompt"),
-    ("Debug", "Terangkan kaedah debugging kod dengan contoh.", "prompt"),
-    ("HTML", "Ajar saya HTML untuk membuat website.", "prompt"),
-    ("CSS", "Ajar saya CSS untuk reka bentuk website moden.", "prompt"),
-    ("JavaScript", "Ajar saya JavaScript dengan contoh interaktif.", "prompt"),
-    ("C++", "Ajar saya asas C++ untuk projek elektronik.", "prompt"),
-    ("IoT", "Cadangkan projek Internet of Things yang menarik.", "prompt"),
-    ("Robotics", "Bimbing saya membina robot ringkas dengan Arduino.", "prompt"),
+    # -------- 20 APP BUBBLES --------
 
-    # 21 - 30: Projects and engineering
-    ("Sensors", "Terangkan jenis sensor Arduino dan kegunaannya.", "prompt"),
-    ("Servo", "Ajar saya cara mengawal servo motor menggunakan Arduino.", "prompt"),
-    ("Circuit", "Ajar saya membaca rajah litar elektronik.", "prompt"),
-    ("Wiring", "Berikan contoh wiring Arduino dengan sensor.", "prompt"),
-    ("FYP", "Cadangkan idea projek akhir bidang teknologi.", "prompt"),
-    ("Innovation", "Berikan idea inovasi teknologi yang praktikal.", "prompt"),
-    ("AI Project", "Cadangkan projek AI yang boleh saya bina.", "prompt"),
-    ("App Design", "Bantu saya merancang reka bentuk aplikasi Android.", "prompt"),
-    ("Cybersecurity", "Ajar saya asas keselamatan siber secara beretika.", "prompt"),
-    ("Database", "Terangkan asas database SQL dengan contoh.", "prompt"),
+    ("YouTube", "▶", "app", "https://www.youtube.com"),
+    ("Google", "G", "app", "https://www.google.com"),
+    ("WhatsApp", "✆", "app", "https://web.whatsapp.com"),
+    ("Maps", "⌖", "app", "https://www.google.com/maps"),
+    ("Gmail", "✉", "app", "https://mail.google.com"),
 
-    # 31 - 40: Productivity and creation
-    ("Planner", "Buatkan jadual belajar produktif selama seminggu.", "prompt"),
-    ("Ideas", "Berikan 10 idea kreatif untuk projek teknologi.", "prompt"),
-    ("Writing", "Ajar saya menulis karangan yang lebih baik.", "prompt"),
-    ("Presentation", "Berikan panduan membuat slide pembentangan.", "prompt"),
-    ("Resume", "Terangkan cara menyediakan resume profesional.", "prompt"),
-    ("Interview", "Latih saya menjawab soalan temuduga.", "prompt"),
-    ("Business", "Cadangkan idea perniagaan teknologi kos rendah.", "prompt"),
-    ("Finance", "Terangkan asas menyimpan wang dan bajet.", "prompt"),
-    ("Motivation", "Berikan motivasi untuk belajar hari ini.", "prompt"),
-    ("Mind Map", "Buatkan peta minda teks tentang teknologi AI.", "prompt"),
+    ("Spotify", "♫", "app", "https://open.spotify.com"),
+    ("GitHub", "⌘", "app", "https://github.com"),
+    ("Wikipedia", "W", "app", "https://www.wikipedia.org"),
+    ("Drive", "△", "app", "https://drive.google.com"),
+    ("Translate", "文", "app", "https://translate.google.com"),
 
-    # 41 - 50: Research
-    ("AI News", "Cari perkembangan teknologi AI terkini dan ringkaskan bersama sumber.", "search"),
-    ("Tech News", "Cari berita teknologi terkini dengan sumber.", "search"),
-    ("Research", "Cari maklumat terkini tentang perkembangan robotik dengan sumber.", "search"),
-    ("Arduino Web", "Cari tutorial Arduino untuk pemula dengan sumber.", "search"),
-    ("ESP32 Web", "Cari idea projek ESP32 terkini dengan sumber.", "search"),
-    ("Science Web", "Cari berita penemuan sains terkini dengan sumber.", "search"),
-    ("Malaysia Tech", "Cari perkembangan industri teknologi Malaysia dengan sumber.", "search"),
-    ("Open Source", "Cari projek AI open source yang sesuai untuk pemula.", "search"),
-    ("Education", "Cari sumber pembelajaran Python percuma yang berkualiti.", "search"),
-    ("AI Tools", "Cari aplikasi AI yang berguna untuk pelajar dengan sumber.", "search"),
+    ("Calendar", "▦", "app", "https://calendar.google.com"),
+    ("Google Meet", "▣", "app", "https://meet.google.com"),
+    ("Canva", "C", "app", "https://www.canva.com"),
+    ("Netflix", "N", "app", "https://www.netflix.com"),
+    ("TikTok", "♪", "app", "https://www.tiktok.com"),
 
-    # 51 - 55: Advanced helpful functions
-    ("Explain Code", "Terangkan contoh program Python baris demi baris.", "prompt"),
-    ("Fix Arduino", "Berikan contoh error Arduino dan cara menyelesaikannya.", "prompt"),
-    ("Prompt Maker", "Ajar saya cara menulis prompt AI yang berkesan.", "prompt"),
-    ("Study Test", "Uji pengetahuan saya tentang elektronik melalui kuiz interaktif.", "prompt"),
-    ("About EDITH", "Perkenalkan E.D.I.T.H dan fungsi yang tersedia dalam aplikasi ini.", "prompt"),
+    ("Instagram", "◎", "app", "https://www.instagram.com"),
+    ("Facebook", "f", "app", "https://www.facebook.com"),
+    ("ChatGPT", "✳", "app", "https://chatgpt.com"),
+    ("Grok", "𝕏", "app", "https://grok.com"),
+    ("Meta AI", "∞", "app", "https://www.meta.ai"),
+
+    # -------- 35 AI BUBBLES --------
+
+    ("AI Chat", "✧", "ai",
+     "Perkenalkan E.D.I.T.H dan bantu saya memulakan perbualan."),
+
+    ("Study", "📖", "ai",
+     "Bantu saya belajar satu topik secara langkah demi langkah."),
+
+    ("Quiz", "?", "ai",
+     "Berikan kuiz pengetahuan am 5 soalan secara interaktif."),
+
+    ("Math", "∑", "ai",
+     "Ajar saya matematik dengan contoh dan penerangan."),
+
+    ("Science", "⚗", "ai",
+     "Terangkan satu konsep sains yang menarik."),
+
+    ("English", "EN", "ai",
+     "Bantu saya berlatih bahasa Inggeris."),
+
+    ("Translator", "⇄", "ai",
+     "Bantu saya menterjemah ayat antara bahasa Melayu dan English."),
+
+    ("History", "⌛", "ai",
+     "Ceritakan satu peristiwa sejarah yang penting."),
+
+    ("Physics", "Φ", "ai",
+     "Ajar saya asas fizik menggunakan contoh mudah."),
+
+    ("Chemistry", "⚛", "ai",
+     "Terangkan asas kimia untuk pelajar."),
+
+    ("Python", "Py", "ai",
+     "Ajar saya coding Python dengan contoh program."),
+
+    ("Arduino", "∞", "ai",
+     "Cadangkan projek Arduino dan berikan coding serta wiring."),
+
+    ("ESP32", "32", "ai",
+     "Ajar saya membina projek ESP32 dengan coding."),
+
+    ("Debug", "⚙", "ai",
+     "Ajar saya teknik debugging dan cara mengenal pasti error kod."),
+
+    ("HTML", "<>", "ai",
+     "Ajar saya asas HTML untuk membina website."),
+
+    ("CSS", "#", "ai",
+     "Ajar saya CSS untuk mereka bentuk website moden."),
+
+    ("JavaScript", "JS", "ai",
+     "Ajar saya JavaScript dengan contoh mudah."),
+
+    ("C++", "C+", "ai",
+     "Ajar saya asas C++ untuk mikropengawal."),
+
+    ("IoT", "◉", "ai",
+     "Cadangkan projek Internet of Things menggunakan sensor."),
+
+    ("Robotics", "⚙", "ai",
+     "Bantu saya merancang projek robotik dengan Arduino."),
+
+    ("Sensors", "◈", "ai",
+     "Terangkan jenis sensor elektronik dan kegunaannya."),
+
+    ("Servo", "↻", "ai",
+     "Ajar saya cara menggunakan servo motor bersama Arduino."),
+
+    ("Circuit", "⌁", "ai",
+     "Ajar saya asas litar elektronik dan komponen."),
+
+    ("FYP", "★", "ai",
+     "Cadangkan idea Final Year Project dalam bidang teknologi."),
+
+    ("AI Project", "AI", "ai",
+     "Cadangkan projek artificial intelligence untuk pemula."),
+
+    ("Planner", "▤", "ai",
+     "Buatkan pelan belajar selama seminggu."),
+
+    ("Writing", "✎", "ai",
+     "Ajar saya teknik penulisan yang baik."),
+
+    ("Business", "$", "ai",
+     "Cadangkan perniagaan teknologi modal rendah."),
+
+    ("Prompt", "✦", "ai",
+     "Ajar saya cara menulis prompt AI yang berkesan."),
+
+    ("Coding", "{ }", "ai",
+     "Bantu saya menulis dan memahami contoh kod Python."),
+
+    ("AI News", "◉", "search",
+     "Cari perkembangan berita AI terkini, ringkaskan bersama sumber."),
+
+    ("Tech News", "⌁", "search",
+     "Cari berita teknologi terkini dan berikan sumber."),
+
+    ("Research", "⌕", "search",
+     "Cari perkembangan robotik terkini dengan sumber rujukan."),
+
+    ("Open Source", "⌘", "search",
+     "Cari projek AI open source yang sesuai untuk pemula."),
+
+    ("Malaysia Tech", "MY", "search",
+     "Cari perkembangan teknologi terkini di Malaysia bersama sumber."),
 ]
 
-assert len(BUBBLE_COMMANDS) == 55
+assert len(BUBBLES) == 55
 
 
-# ====================================================
-# 8. CUSTOM STREAMLIT COMPONENT
+# ======================================================
+# 8. GALAXY NEURAL V3 HTML COMPONENT
 #
-# This frontend is automatically written to a temp
-# directory. User does not need a separate HTML file.
-# ====================================================
+# Canvas with:
+# - ALL 55 labelled bubbles
+# - Icons INSIDE bubbles
+# - Live frequency analysis
+# - Clickable app selection
+# - Real external links
+# - AI click -> Python
+# - Emotion colors
+# - Neural links
+# ======================================================
 
-GALAXY_HTML = r"""
+VISUAL_HTML = r"""
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1">
 
 <style>
 * {
@@ -495,79 +496,117 @@ GALAXY_HTML = r"""
 
 html, body {
     margin: 0;
-    padding: 0;
-    overflow: hidden;
     background: transparent;
-    color: #defaff;
-    font-family: system-ui, Arial, sans-serif;
+    color: #e4f8ff;
+    font-family: Arial, sans-serif;
+    overflow-x: hidden;
 }
 
 .shell {
-    width: 100%;
-    max-width: 480px;
-    margin: auto;
     text-align: center;
-    padding: 6px 4px 10px;
+    padding: 6px 4px 12px;
     background:
         radial-gradient(
             ellipse at center,
-            rgba(29,82,179,.14),
+            rgba(36,103,220,.18),
             transparent 75%
         );
 }
 
+.header {
+    color: #baf5ff;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    text-shadow: 0 0 12px #38dfff;
+    margin: 6px 0;
+}
+
+.sub {
+    color: #97b7df;
+    font: 11px monospace;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
 canvas {
-    display: block;
     width: 100%;
-    height: 318px;
+    display: block;
     cursor: pointer;
     touch-action: manipulation;
 }
 
-.title {
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 5px;
-    text-shadow: 0 0 12px #41dfff;
-}
-
-.status {
+#status {
+    color: #8ee3ff;
     font: 11px monospace;
     letter-spacing: 2px;
-    color: #80dfff;
-    margin: 7px 0 4px;
+    margin: 10px 0 6px;
 }
 
-.selection {
+#selection {
     font-size: 12px;
-    font-weight: 650;
-    color: #ffe1a3;
-    min-height: 18px;
+    min-height: 20px;
+    color: #ffe0a8;
+    margin-top: 5px;
 }
 
-.tip {
-    font-size: 10px;
-    color: #99afd1;
-    margin: 6px 0;
+#linkPanel {
+    display: none;
+    background: rgba(13,30,62,.95);
+    border: 1px solid #4bbfff88;
+    border-radius: 16px;
+    padding: 12px;
+    margin: 8px 10px;
 }
 
-audio {
-    display: block;
-    width: 92%;
-    max-width: 355px;
-    margin: 9px auto 0;
+#linkPanel p {
+    margin: 4px 0 12px;
+    font-size: 12px;
+}
+
+#openLink {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: linear-gradient(
+        120deg,
+        #117dd1,
+        #774bd1
+    );
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+#closeLink {
+    display: inline-block;
+    margin-left: 8px;
+    border: 1px solid #679ac5;
+    border-radius: 10px;
+    color: white;
+    background: #24395c;
+    padding: 10px;
+    font-size: 12px;
+    cursor: pointer;
 }
 
 .legend {
-    font-size: 10px;
-    color: #abc5ed;
+    color: #9ab1d1;
+    font-size: 11px;
     line-height: 1.7;
+    margin: 9px 0;
 }
 
-@media(prefers-reduced-motion:reduce) {
-    canvas {
-        opacity: .85;
-    }
+audio {
+    width: 92%;
+    max-width: 350px;
+    display: none;
+    margin: 12px auto 0;
+}
+
+.holoCanvas {
+    height: 265px;
 }
 </style>
 </head>
@@ -576,126 +615,135 @@ audio {
 
 <div class="shell">
 
-    <canvas
-        id="galaxy"
-        aria-label="Interactive Galaxy Neural Bubble"
-    ></canvas>
+    <div class="header">E.D.I.T.H</div>
 
-    <div class="title">
-        E.D.I.T.H
+    <div class="sub" id="subtitle">
+        GALAXY NEURAL V3
     </div>
 
-    <div id="status" class="status">
-        STANDBY
+    <canvas id="galaxy"></canvas>
+
+    <div id="status">STANDBY</div>
+
+    <div id="selection">
+        Tap any bubble to activate
     </div>
 
-    <div id="selection" class="selection">
-        Tap a bubble to activate AI
-    </div>
+    <div id="linkPanel">
+        <p id="linkTitle"></p>
 
-    <div class="tip">
-        55 Interactive AI Bubbles
+        <a
+            id="openLink"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Open App
+        </a>
+
+        <button id="closeLink" type="button">
+            Close
+        </button>
     </div>
 
     <div class="legend">
-        Cyan: AI Skills &nbsp; • &nbsp;
-        Purple: Coding &nbsp; • &nbsp;
-        Orange: Research
+        🔵 AI Skills &nbsp; 🟣 Coding
+        &nbsp; 🟠 App Launchers / Research
     </div>
 
-    <audio
-        id="speech"
-        controls
-        preload="metadata"
-        style="display:none"
-    ></audio>
+    <audio id="speech" controls
+        preload="metadata"></audio>
 
 </div>
 
 <script>
 "use strict";
 
-// Streamlit Custom Component bridge
+// ====================================================
+// STREAMLIT BRIDGE
+// ====================================================
 
-function send(type, data = {}) {
-    window.parent.postMessage(
-        Object.assign({
-            isStreamlitMessage: true,
-            type: type
-        }, data),
-        "*"
-    );
+function post(type, extra = {}) {
+    window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: type,
+        ...extra
+    }, "*");
 }
 
-function sendHeight() {
-    send("streamlit:setFrameHeight", {
-        height: document.body.scrollHeight + 6
+function setHeight() {
+    post("streamlit:setFrameHeight", {
+        height: document.body.scrollHeight + 8
     });
 }
+
+post("streamlit:componentReady", {
+    apiVersion: 1
+});
+
+// ====================================================
+// ELEMENTS AND STATE
+// ====================================================
 
 const canvas = document.getElementById("galaxy");
 const ctx = canvas.getContext("2d");
-const speech = document.getElementById("speech");
-const statusText = document.getElementById("status");
-const selectionText = document.getElementById("selection");
 
-let commands = [];
+const audio = document.getElementById("speech");
+const statusEl = document.getElementById("status");
+const selectionEl = document.getElementById("selection");
+
+const linkPanel = document.getElementById("linkPanel");
+const linkTitle = document.getElementById("linkTitle");
+const openLink = document.getElementById("openLink");
+const closeLink = document.getElementById("closeLink");
+
+let bubbles = [];
+let mode = "neural";
 let emotion = "neutral";
-let busy = false;
-let speaking = false;
-let isHolo = false;
-let audioSource = "";
-let time = 0;
-let width = 400;
-let height = 318;
+let isBusy = false;
 
-let analyser = null;
+let selected = -1;
+let hovered = -1;
+
+let audioValue = "";
+let speaking = false;
+
 let audioContext = null;
-let audioSourceNode = null;
-let frequencyData = null;
-let waveformData = null;
+let analyser = null;
+let mediaSource = null;
+let frequency = null;
+let waveform = null;
 
 let energy = 0;
 let bass = 0;
-let middle = 0;
+let mid = 0;
 let treble = 0;
 
-let selected = -1;
-let hover = -1;
-let points = [];
+let w = 400;
+let h = 930;
 
-const nodes = [];
+let time = 0;
+let positions = [];
 
-for (let i = 0; i < 55; i++) {
-    nodes.push({
-        a: i * 2.399963229728653,
-        r: 23 + Math.sqrt((i + 1) / 55) * 116,
-        size: 2.9 + (i % 5) * .50,
-        phase: i * 1.63
-    });
+// 55 bubbles arranged across 5 columns and 11 rows.
+// Text/icons remain legible on a mobile phone.
+
+const COLS = 5;
+const ROWS = 11;
+
+function updateStatus() {
+    statusEl.textContent = isBusy
+        ? "THINKING"
+        : speaking
+            ? "SPEAKING"
+            : "STANDBY";
 }
 
-function resize() {
-    const rect = canvas.getBoundingClientRect();
-    width = rect.width || 380;
+// ====================================================
+// AUDIO ANALYSER
+// ====================================================
 
-    const dpr = Math.min(
-        window.devicePixelRatio || 1,
-        2
-    );
-
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-
-    ctx.setTransform(
-        dpr, 0, 0, dpr, 0, 0
-    );
-}
-
-window.addEventListener("resize", resize);
-
-function setupAudio() {
-    if (!audioSource || analyser) return;
+function setupAnalyser() {
+    if (analyser) return;
 
     try {
         const AudioContextClass =
@@ -706,30 +754,29 @@ function setupAudio() {
 
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 1024;
-        analyser.smoothingTimeConstant = .74;
+        analyser.smoothingTimeConstant = 0.72;
 
-        audioSourceNode =
-            audioContext.createMediaElementSource(speech);
+        mediaSource =
+            audioContext.createMediaElementSource(audio);
 
-        audioSourceNode.connect(analyser);
+        mediaSource.connect(analyser);
         analyser.connect(audioContext.destination);
 
-        frequencyData = new Uint8Array(
+        frequency = new Uint8Array(
             analyser.frequencyBinCount
         );
 
-        waveformData = new Uint8Array(
+        waveform = new Uint8Array(
             analyser.fftSize
         );
 
     } catch (err) {
-        console.warn("Audio analyser:", err);
-        analyser = null;
+        console.log("Analyser:", err);
     }
 }
 
 function resumeAudio() {
-    setupAudio();
+    setupAnalyser();
 
     if (
         audioContext &&
@@ -739,697 +786,828 @@ function resumeAudio() {
     }
 }
 
-speech.addEventListener("play", () => {
+audio.addEventListener("play", () => {
     resumeAudio();
     speaking = true;
     updateStatus();
 });
 
-speech.addEventListener("playing", () => {
-    resumeAudio();
+audio.addEventListener("playing", () => {
     speaking = true;
     updateStatus();
 });
 
-speech.addEventListener("pause", () => {
+audio.addEventListener("pause", () => {
     speaking = false;
     updateStatus();
 });
 
-speech.addEventListener("ended", () => {
+audio.addEventListener("ended", () => {
     speaking = false;
     updateStatus();
 });
 
-speech.addEventListener("error", () => {
-    speaking = false;
-    updateStatus();
-});
+function average(a, begin, end) {
+    if (!a) return 0;
 
-function updateStatus() {
-    statusText.textContent = busy
-        ? "THINKING"
-        : speaking
-            ? "SPEAKING"
-            : "STANDBY";
-}
-
-function onRender(event) {
-    if (!event.data) return;
-
-    const args = event.data.args || {};
-
-    commands = Array.isArray(args.commands)
-        ? args.commands
-        : [];
-
-    emotion = args.emotion || "neutral";
-    busy = !!args.busy;
-    isHolo = args.mode === "holo";
-
-    const newAudio = args.audio || "";
-
-    if (newAudio !== audioSource) {
-        audioSource = newAudio;
-
-        speech.pause();
-
-        if (audioSource) {
-            speech.src =
-                "data:audio/mpeg;base64," +
-                audioSource;
-
-            speech.style.display = "block";
-        } else {
-            speech.removeAttribute("src");
-            speech.style.display = "none";
-        }
-    }
-
-    selectionText.textContent = isHolo
-        ? "Holographic Voice Core"
-        : selected >= 0 && commands[selected]
-            ? "Selected: " + commands[selected][0]
-            : "Tap a bubble to activate AI";
-
-    updateStatus();
-    sendHeight();
-}
-
-window.addEventListener(
-    "message",
-    function(event) {
-        if (
-            event.data &&
-            event.data.type === "streamlit:render"
-        ) {
-            onRender(event);
-        }
-    }
-);
-
-send("streamlit:componentReady", {
-    apiVersion: 1
-});
-
-function averageRange(array, first, last) {
-    let sum = 0;
+    let total = 0;
     let count = 0;
 
-    for (let i = first; i < last; i++) {
-        sum += array[i] / 255;
+    for (let i = begin; i < end; i++) {
+        total += a[i] / 255;
         count++;
     }
 
-    return count ? sum / count : 0;
+    return count ? total / count : 0;
 }
 
-function updateAudioLevels() {
+function updateSound() {
     let nextEnergy = 0;
     let nextBass = 0;
-    let nextMiddle = 0;
+    let nextMid = 0;
     let nextTreble = 0;
 
     if (speaking && analyser) {
-        analyser.getByteFrequencyData(
-            frequencyData
-        );
+        analyser.getByteFrequencyData(frequency);
+        analyser.getByteTimeDomainData(waveform);
 
-        analyser.getByteTimeDomainData(
-            waveformData
-        );
+        const n = frequency.length;
 
-        const n = frequencyData.length;
-
-        nextBass = averageRange(
-            frequencyData,
+        nextBass = average(
+            frequency,
             1,
-            Math.max(2, Math.floor(n * .08))
+            Math.floor(n * .10)
         );
 
-        nextMiddle = averageRange(
-            frequencyData,
-            Math.floor(n * .08),
-            Math.floor(n * .34)
+        nextMid = average(
+            frequency,
+            Math.floor(n * .10),
+            Math.floor(n * .35)
         );
 
-        nextTreble = averageRange(
-            frequencyData,
-            Math.floor(n * .34),
-            Math.floor(n * .80)
+        nextTreble = average(
+            frequency,
+            Math.floor(n * .35),
+            Math.floor(n * .85)
         );
 
-        let squareSum = 0;
+        let sum = 0;
 
-        for (let i = 0; i < waveformData.length; i++) {
-            const sample =
-                (waveformData[i] - 128) / 128;
-
-            squareSum += sample * sample;
+        for (let i = 0; i < waveform.length; i++) {
+            const sample = (waveform[i] - 128) / 128;
+            sum += sample * sample;
         }
 
-        const rms = Math.sqrt(
-            squareSum / waveformData.length
-        );
+        const rms = Math.sqrt(sum / waveform.length);
 
-        nextEnergy = Math.min(1, rms * 4.2);
+        nextEnergy = Math.min(
+            1,
+            rms * 4.5
+        );
     }
 
-    const smoothing = speaking ? .24 : .08;
+    const speed = speaking ? .25 : .08;
 
-    energy += (nextEnergy - energy) * smoothing;
-    bass += (nextBass - bass) * smoothing;
-    middle += (nextMiddle - middle) * smoothing;
-    treble += (nextTreble - treble) * smoothing;
+    energy += (nextEnergy - energy) * speed;
+    bass += (nextBass - bass) * speed;
+    mid += (nextMid - mid) * speed;
+    treble += (nextTreble - treble) * speed;
 }
 
-function palette(i) {
+// ====================================================
+// COLOR SYSTEM
+// ====================================================
+
+function getColor(index) {
+    const item = bubbles[index];
+    const type = item ? item[2] : "ai";
+
     if (emotion === "happy") {
-        return i % 3 === 0
-            ? "#ffc86a"
-            : "#60f0ca";
+        return type === "app"
+            ? "#ffc86d"
+            : "#6affd7";
     }
 
     if (emotion === "sad") {
-        return i % 3 === 0
-            ? "#6c8dff"
-            : "#77c5ff";
+        return type === "app"
+            ? "#9ba5ff"
+            : "#65caff";
     }
 
     if (emotion === "surprised") {
-        return i % 3 === 0
-            ? "#ffa36b"
-            : "#f2a5ff";
+        return type === "app"
+            ? "#ffad7d"
+            : "#dc96ff";
     }
 
-    if (i >= 40 && i < 50) {
-        return "#ffc67a";
+    if (type === "app") {
+        return "#ffbd77";
     }
 
-    if (i >= 10 && i < 30) {
-        return "#b99aff";
+    if (type === "search") {
+        return "#ed9dff";
     }
 
-    return "#58e5ff";
+    if (index % 3 === 0) {
+        return "#b89cff";
+    }
+
+    return "#65eaff";
 }
 
-function positions() {
-    const cx = width / 2;
-    const cy = 150;
+// ====================================================
+// CANVAS SIZE
+// ====================================================
 
-    const scale = Math.min(
-        1,
-        width / 390
+function resize() {
+    const rect = canvas.getBoundingClientRect();
+
+    w = rect.width || 390;
+
+    if (mode === "holo") {
+        h = 265;
+    } else {
+        const cell = w / COLS;
+        h = Math.max(740, ROWS * cell * 1.09 + 30);
+    }
+
+    canvas.style.height = h + "px";
+
+    const dpr = Math.min(
+        window.devicePixelRatio || 1,
+        2
     );
 
-    return nodes.map((node, i) => {
-        const shift =
-            Math.sin(time * 1.5 + node.phase) *
-            (2 + energy * 8);
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
 
-        const radius =
-            (node.r + shift + bass * 18) *
-            scale;
+    ctx.setTransform(
+        dpr, 0, 0, dpr, 0, 0
+    );
 
-        const a =
-            node.a +
-            time * (
-                .09 + treble * .09
-            );
-
-        return {
-            x: cx + Math.cos(a) * radius,
-            y: cy + Math.sin(a) * radius * .78,
-            i: i
-        };
-    });
+    setHeight();
 }
 
-function circle(x, y, r, color, glow) {
-    ctx.beginPath();
-    ctx.arc(x, y, Math.max(1, r), 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = glow;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-}
+window.addEventListener("resize", resize);
 
-function drawBars(cx) {
-    for (let i = 0; i < 21; i++) {
-        const idx = frequencyData
-            ? Math.min(
-                frequencyData.length - 1,
-                Math.floor(
-                    i / 21 *
-                    frequencyData.length * .48
-                )
+// ====================================================
+// POSITIONS
+// ====================================================
+
+function calculatePositions() {
+    const cell = w / COLS;
+    const vertical = (h - 26) / ROWS;
+
+    positions = [];
+
+    for (let i = 0; i < bubbles.length; i++) {
+        const row = Math.floor(i / COLS);
+        const col = i % COLS;
+
+        const wave =
+            Math.sin(
+                time * 1.5 + i * .67
+            ) * (1.3 + energy * 4);
+
+        const x =
+            cell * (col + .5) +
+            wave;
+
+        const y =
+            vertical * (row + .5) +
+            13 +
+            Math.cos(
+                time + i * .47
+            ) * (1.5 + bass * 5);
+
+        positions.push({
+            x: x,
+            y: y,
+            r: Math.min(
+                cell * .40,
+                36
             )
-            : 0;
-
-        const val = (
-            speaking && frequencyData
-                ? frequencyData[idx] / 255
-                : 0
-        );
-
-        const h =
-            3 + val * 30 +
-            (!speaking
-                ? Math.abs(Math.sin(time + i)) * 1.5
-                : 0);
-
-        ctx.fillStyle =
-            i % 4 === 0
-                ? "#b59aff"
-                : "#62eaff";
-
-        ctx.fillRect(
-            cx - 91 + i * 8.7,
-            303 - h,
-            4,
-            h
-        );
+        });
     }
 }
 
-function drawGalaxy() {
-    const cx = width / 2;
-    const cy = 150;
+// ====================================================
+// TEXT INSIDE BUBBLES
+// ====================================================
 
-    points = positions();
+function wrapLabel(label) {
+    if (label.length <= 10) {
+        return [label];
+    }
 
-    const outer = ctx.createRadialGradient(
-        cx, cy, 10,
-        cx, cy, 148 + energy * 35
-    );
+    const words = label.split(" ");
 
-    outer.addColorStop(
+    if (words.length >= 2) {
+        return words;
+    }
+
+    return [
+        label.slice(0, 9),
+        label.slice(9)
+    ];
+}
+
+function drawBubble(index) {
+    const item = bubbles[index];
+    const p = positions[index];
+
+    if (!item || !p) return;
+
+    const selectedBubble = index === selected;
+
+    const pulse =
+        1 +
+        energy * .13 +
+        bass * .10 +
+        Math.sin(
+            time * 2.4 + index
+        ) * .015;
+
+    const r =
+        p.r * pulse +
+        (selectedBubble ? 2 : 0);
+
+    const color = getColor(index);
+
+    // Outer glow
+    ctx.beginPath();
+    ctx.arc(
+        p.x,
+        p.y,
+        r + 3,
         0,
-        "rgba(65,158,255,.14)"
+        Math.PI * 2
     );
 
-    outer.addColorStop(
-        .55,
-        "rgba(139,92,246,.08)"
+    ctx.fillStyle = "rgba(8,22,49,.90)";
+    ctx.fill();
+
+    // Bubble gradient
+    const gradient =
+        ctx.createRadialGradient(
+            p.x - r * .25,
+            p.y - r * .32,
+            2,
+            p.x,
+            p.y,
+            r
+        );
+
+    gradient.addColorStop(
+        0,
+        "rgba(45,79,132,.94)"
     );
 
-    outer.addColorStop(
+    gradient.addColorStop(
         1,
-        "rgba(0,0,0,0)"
+        "rgba(8,15,39,.98)"
     );
 
-    ctx.fillStyle = outer;
-    ctx.fillRect(
-        0, 0, width, height
+    ctx.beginPath();
+    ctx.arc(
+        p.x, p.y, r,
+        0, Math.PI * 2
     );
 
-    // Neural connections
-    for (let i = 0; i < points.length; i++) {
-        for (let j = i + 1; j < points.length; j++) {
-            const a = points[i];
-            const b = points[j];
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth =
+        selectedBubble ? 2.8 : 1.2;
+
+    ctx.shadowBlur =
+        selectedBubble ? 20 : 8 + energy * 20;
+
+    ctx.shadowColor = color;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Icon INSIDE bubble
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillStyle = color;
+    ctx.font = (
+        "bold " +
+        Math.max(13, Math.min(19, r * .48)) +
+        "px Arial"
+    );
+
+    ctx.fillText(
+        item[1],
+        p.x,
+        p.y - r * .30
+    );
+
+    // Name INSIDE bubble
+    const lines = wrapLabel(item[0]);
+
+    ctx.fillStyle = "#eefaff";
+    ctx.font =
+        "bold " +
+        Math.max(7, Math.min(10, r * .26)) +
+        "px Arial";
+
+    if (lines.length === 1) {
+        ctx.fillText(
+            lines[0],
+            p.x,
+            p.y + r * .34,
+            r * 1.8
+        );
+    } else {
+        ctx.fillText(
+            lines[0],
+            p.x,
+            p.y + r * .20,
+            r * 1.85
+        );
+
+        ctx.fillText(
+            lines.slice(1).join(" "),
+            p.x,
+            p.y + r * .49,
+            r * 1.85
+        );
+    }
+
+    // Small activity indicator
+    if (selectedBubble) {
+        ctx.beginPath();
+        ctx.arc(
+            p.x + r * .68,
+            p.y - r * .70,
+            3.6,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+    }
+}
+
+// ====================================================
+// NEURAL CONNECTIONS
+// ====================================================
+
+function drawConnections() {
+    for (let i = 0; i < positions.length; i++) {
+        const a = positions[i];
+
+        for (let j = i + 1; j < positions.length; j++) {
+            const b = positions[j];
 
             const d = Math.hypot(
                 a.x - b.x,
                 a.y - b.y
             );
 
-            const limit = 67;
-
-            if (d < limit) {
+            if (d < w / COLS * 1.65) {
                 const opacity =
-                    (1 - d / limit) *
-                    (.22 + energy * .65);
+                    (1 - d / (w / COLS * 1.65)) *
+                    (.18 + energy * .38);
 
                 ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
 
                 ctx.strokeStyle =
-                    "rgba(99,218,255," +
+                    "rgba(99,219,255," +
                     opacity.toFixed(3) +
                     ")";
 
-                ctx.lineWidth =
-                    .75 + bass * 1.6;
-
-                ctx.moveTo(a.x, a.y);
-                ctx.lineTo(b.x, b.y);
+                ctx.lineWidth = .8 + bass * 1.2;
                 ctx.stroke();
             }
         }
     }
-
-    // Nodes
-    points.forEach((p, i) => {
-        let radius =
-            nodes[i].size +
-            energy * 6 +
-            treble * 3;
-
-        if (i === selected) {
-            radius += 3;
-
-            ctx.beginPath();
-            ctx.arc(
-                p.x,
-                p.y,
-                radius + 5,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 1.3;
-            ctx.stroke();
-        }
-
-        if (i === hover) {
-            radius += 2.8;
-        }
-
-        circle(
-            p.x,
-            p.y,
-            radius,
-            palette(i),
-            i === selected ? 23 : 12
-        );
-    });
-
-    // Center orb
-    const coreRadius =
-        23 +
-        energy * 20 +
-        bass * 8 +
-        Math.sin(time * 4) * 1.2;
-
-    const gradient =
-        ctx.createRadialGradient(
-            cx - 7, cy - 8, 1,
-            cx, cy, coreRadius
-        );
-
-    gradient.addColorStop(
-        0,
-        "#ffffff"
-    );
-
-    gradient.addColorStop(
-        .34,
-        "#85f4ff"
-    );
-
-    gradient.addColorStop(
-        1,
-        "#3148ba"
-    );
-
-    circle(
-        cx,
-        cy,
-        coreRadius,
-        gradient,
-        24 + energy * 25
-    );
-
-    drawBars(cx);
 }
 
-function drawHologram() {
-    const cx = width / 2;
-    const cy = 150;
+// ====================================================
+// MODE 2 - HOLOGRAPHIC CORE
+// ====================================================
+
+function drawHolo() {
+    const cx = w / 2;
+    const cy = h / 2;
 
     for (let k = 0; k < 3; k++) {
         ctx.save();
         ctx.translate(cx, cy);
 
         ctx.rotate(
-            time * (k % 2 ? -.5 : .7)
-        );
-
-        ctx.setLineDash(
-            k === 1
-                ? [4, 8]
-                : [22, 13]
+            time * (k % 2 ? -.6 : .7)
         );
 
         ctx.beginPath();
+        ctx.setLineDash(
+            k === 1 ? [4, 8] : [23, 14]
+        );
 
         ctx.strokeStyle = [
-            "#63eaff",
-            "#ad8aff",
-            "#4c8bff"
+            "#65eaff",
+            "#b18cff",
+            "#4c8cff"
         ][k];
 
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.6;
 
         ctx.arc(
             0, 0,
-            64 + k * 22 + energy * 12,
-            0,
-            Math.PI * 2
+            64 + k * 22 + energy * 8,
+            0, Math.PI * 2
         );
 
         ctx.stroke();
         ctx.restore();
     }
 
-    const radius =
-        51 + energy * 18;
+    const radius = 51 + energy * 17;
 
     const gradient =
         ctx.createRadialGradient(
-            cx - 15,
-            cy - 17,
+            cx - 14,
+            cy - 18,
             1,
             cx,
             cy,
             radius
         );
 
-    gradient.addColorStop(
-        0,
-        "#ecffff"
+    gradient.addColorStop(0, "#ffffff");
+    gradient.addColorStop(.23, "#79efff");
+    gradient.addColorStop(.58, "#586bec");
+    gradient.addColorStop(1, "#17134e");
+
+    ctx.beginPath();
+    ctx.arc(
+        cx, cy, radius,
+        0, Math.PI * 2
     );
 
-    gradient.addColorStop(
-        .25,
-        "#67eaff"
-    );
+    ctx.fillStyle = gradient;
+    ctx.shadowColor = "#4cdfff";
+    ctx.shadowBlur = 27 + energy * 20;
+    ctx.fill();
+    ctx.shadowBlur = 0;
 
-    gradient.addColorStop(
-        .6,
-        "#5863ea"
-    );
-
-    gradient.addColorStop(
-        1,
-        "#161444"
-    );
-
-    circle(
-        cx,
-        cy,
-        radius,
-        gradient,
-        24 + energy * 24
-    );
-
-    drawBars(cx);
+    drawAudioBars(cx, h - 7);
 }
 
-function draw() {
-    requestAnimationFrame(draw);
+// ====================================================
+// AUDIO BARS
+// ====================================================
 
-    const moving = !document.hidden;
+function drawAudioBars(cx, bottom) {
+    for (let i = 0; i < 19; i++) {
+        let value = 0;
 
-    if (!moving) return;
+        if (speaking && frequency) {
+            const idx = Math.min(
+                frequency.length - 1,
+                i * 5
+            );
 
-    time += speaking ? .032 : .010;
+            value = frequency[idx] / 255;
+        }
 
-    updateAudioLevels();
+        const barHeight =
+            3 + value * 25;
 
-    ctx.clearRect(
-        0, 0, width, height
-    );
+        ctx.fillStyle =
+            i % 3 === 0
+                ? "#b99bff"
+                : "#65eaff";
 
-    if (isHolo) {
-        drawHologram();
-    } else {
-        drawGalaxy();
+        ctx.fillRect(
+            cx - 80 + i * 8.5,
+            bottom - barHeight,
+            4,
+            barHeight
+        );
     }
 }
 
-function getPointer(evt) {
-    const r = canvas.getBoundingClientRect();
+// ====================================================
+// ANIMATION
+// ====================================================
+
+function frame() {
+    requestAnimationFrame(frame);
+
+    if (document.hidden) return;
+
+    time += speaking ? .033 : .012;
+
+    updateSound();
+
+    ctx.clearRect(
+        0, 0, w, h
+    );
+
+    if (mode === "holo") {
+        drawHolo();
+        return;
+    }
+
+    // Galaxy aura
+    const aura = ctx.createRadialGradient(
+        w / 2,
+        h / 2,
+        10,
+        w / 2,
+        h / 2,
+        h * .55
+    );
+
+    aura.addColorStop(
+        0,
+        "rgba(55,92,210,.13)"
+    );
+
+    aura.addColorStop(
+        .55,
+        "rgba(111,61,196,.08)"
+    );
+
+    aura.addColorStop(
+        1,
+        "rgba(0,0,0,0)"
+    );
+
+    ctx.fillStyle = aura;
+    ctx.fillRect(0, 0, w, h);
+
+    calculatePositions();
+    drawConnections();
+
+    for (let i = 0; i < bubbles.length; i++) {
+        drawBubble(i);
+    }
+
+    drawAudioBars(w / 2, h - 4);
+}
+
+// ====================================================
+// CLICK DETECTION
+// ====================================================
+
+function clickPosition(event) {
+    const rect = canvas.getBoundingClientRect();
 
     return {
-        x: evt.clientX - r.left,
-        y: evt.clientY - r.top
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
     };
 }
 
-function findBubble(evt) {
-    const mouse = getPointer(evt);
+function bubbleAt(event) {
+    const p = clickPosition(event);
 
-    let best = -1;
-    let distance = Infinity;
+    let match = -1;
+    let best = Infinity;
 
-    for (let i = 0; i < points.length; i++) {
-        const p = points[i];
+    for (let i = 0; i < positions.length; i++) {
+        const node = positions[i];
 
         const d = Math.hypot(
-            mouse.x - p.x,
-            mouse.y - p.y
+            p.x - node.x,
+            p.y - node.y
         );
 
-        if (d < distance) {
-            distance = d;
-            best = i;
+        // Slightly enlarged touch target
+        if (d < node.r + 5 && d < best) {
+            match = i;
+            best = d;
         }
     }
 
-    // Enlarge touch target for phones
-    return distance < 16 ? best : -1;
+    return match;
 }
 
 canvas.addEventListener(
     "pointermove",
-    evt => {
-        if (isHolo) return;
+    event => {
+        if (mode === "holo") return;
 
-        hover = findBubble(evt);
+        hovered = bubbleAt(event);
 
         canvas.style.cursor =
-            hover >= 0
-                ? "pointer"
-                : "default";
+            hovered >= 0 ? "pointer" : "default";
 
-        if (
-            hover >= 0 &&
-            commands[hover]
-        ) {
-            canvas.title =
-                commands[hover][0];
-        } else {
-            canvas.title = "";
-        }
-    }
-);
-
-canvas.addEventListener(
-    "pointerleave",
-    () => {
-        hover = -1;
+        canvas.title =
+            hovered >= 0
+                ? bubbles[hovered][0]
+                : "";
     }
 );
 
 canvas.addEventListener(
     "click",
-    evt => {
-        if (isHolo || busy) return;
-
-        const index = findBubble(evt);
-
+    event => {
         if (
-            index < 0 ||
-            !commands[index]
+            mode === "holo" ||
+            isBusy
         ) {
             return;
         }
 
-        selected = index;
+        const i = bubbleAt(event);
 
-        const chosen = commands[index];
+        if (i < 0 || !bubbles[i]) return;
 
-        selectionText.textContent =
-            "Activating: " + chosen[0];
+        selected = i;
 
-        // This sends the click to the Python backend.
-        // Python can then execute the requested AI prompt.
-        send(
-            "streamlit:setComponentValue",
-            {
-                value: {
-                    id:
-                        String(Date.now()) +
-                        "-" +
-                        String(Math.random()),
-                    index: index
+        const chosen = bubbles[i];
+        const name = chosen[0];
+        const type = chosen[2];
+        const target = chosen[3];
+
+        selectionEl.textContent =
+            "Selected: " + name;
+
+        if (type === "app") {
+
+            // The app-opening control is INSIDE
+            // the Galaxy interface.
+            // A real user click opens the link.
+
+            linkTitle.textContent =
+                "Open " + name + "?";
+
+            openLink.textContent =
+                "Buka " + name;
+
+            openLink.href = target;
+
+            linkPanel.style.display = "block";
+            setHeight();
+
+        } else {
+
+            linkPanel.style.display = "none";
+
+            // Send bubble command to Streamlit
+            post(
+                "streamlit:setComponentValue",
+                {
+                    value: {
+                        id:
+                            Date.now().toString() +
+                            "-" +
+                            Math.random().toString(36),
+                        index: i
+                    }
                 }
+            );
+        }
+    }
+);
+
+closeLink.addEventListener(
+    "click",
+    () => {
+        linkPanel.style.display = "none";
+        setHeight();
+    }
+);
+
+// ====================================================
+// STREAMLIT RENDER
+// ====================================================
+
+window.addEventListener(
+    "message",
+    event => {
+        if (
+            !event.data ||
+            event.data.type !== "streamlit:render"
+        ) {
+            return;
+        }
+
+        const args = event.data.args || {};
+
+        bubbles = Array.isArray(args.bubbles)
+            ? args.bubbles
+            : [];
+
+        mode = args.mode || "neural";
+        emotion = args.emotion || "neutral";
+        isBusy = !!args.busy;
+
+        const newAudio = args.audio || "";
+
+        if (newAudio !== audioValue) {
+            audioValue = newAudio;
+
+            audio.pause();
+
+            if (audioValue) {
+                audio.src =
+                    "data:audio/mpeg;base64," +
+                    audioValue;
+
+                audio.style.display = "block";
+            } else {
+                audio.removeAttribute("src");
+                audio.style.display = "none";
             }
-        );
+        }
+
+        document.getElementById(
+            "subtitle"
+        ).textContent =
+            mode === "holo"
+                ? "HOLOGRAPHIC VOICE CORE"
+                : "GALAXY NEURAL V3 • 55 BUBBLES";
+
+        selectionEl.textContent =
+            mode === "holo"
+                ? "Voice Core Ready"
+                : "Tap a bubble to activate";
+
+        linkPanel.style.display = "none";
+
+        updateStatus();
+        resize();
     }
 );
 
 resize();
-draw();
-sendHeight();
+frame();
+setHeight();
+
 </script>
+
 </body>
 </html>
 """
 
 
+# ======================================================
+# 9. BUILD CUSTOM COMPONENT AUTOMATICALLY
+# ======================================================
+
 @st.cache_resource
-def create_visual_component():
-    folder = Path(
-        tempfile.gettempdir()
-    ) / "edith_galaxy_v2_component"
+def create_galaxy_component():
+    folder = (
+        Path(tempfile.gettempdir())
+        / "edith_galaxy_v3"
+    )
 
     folder.mkdir(
         parents=True,
         exist_ok=True
     )
 
-    index_file = folder / "index.html"
-
-    # Rewrite if a newer HTML version is deployed.
-    index_file.write_text(
-        GALAXY_HTML,
+    (folder / "index.html").write_text(
+        VISUAL_HTML,
         encoding="utf-8"
     )
 
     return declare_component(
-        "edith_galaxy_v2",
+        "edith_galaxy_v3",
         path=str(folder)
     )
 
 
-galaxy_component = create_visual_component()
+galaxy_component = create_galaxy_component()
 
 
-def display_visual(
-    mode,
-    audio=None,
-    emotion="neutral",
-    busy=False
-):
-    encoded = (
+def render_visual(mode, audio=None, emotion="neutral"):
+    audio_base64 = (
         base64.b64encode(audio).decode("ascii")
         if audio
         else ""
     )
 
-    commands_for_js = [
-        [item[0], item[2]]
-        for item in BUBBLE_COMMANDS
+    frontend_bubbles = [
+        [name, icon, kind, value]
+        for name, icon, kind, value in BUBBLES
     ]
 
     return galaxy_component(
+        bubbles=frontend_bubbles,
         mode=mode,
-        audio=encoded,
         emotion=emotion,
-        busy=busy,
-        commands=commands_for_js,
+        audio=audio_base64,
+        busy=st.session_state.pending,
         default=None,
-        key="edith_interactive_visual"
+        key="edith_galaxy_v3_visual"
     )
 
 
-# ====================================================
-# 9. SIDEBAR
-# ====================================================
+# ======================================================
+# 10. SIDEBAR
+# ======================================================
 
 with st.sidebar:
     st.header("⚙️ E.D.I.T.H Settings")
@@ -1439,7 +1617,7 @@ with st.sidebar:
         [
             "Mode 1 - Chat Only",
             "Mode 2 - Holographic Voice Core",
-            "Mode 3 - Galaxy Neural V2"
+            "Mode 3 - Galaxy Neural V3"
         ]
     )
 
@@ -1490,8 +1668,8 @@ with st.sidebar:
         st.rerun()
 
     st.caption(
-        "Memory dan chat adalah untuk "
-        "sesi semasa sahaja."
+        "Memory dan Chat History untuk "
+        "sesi ini sahaja."
     )
 
     st.divider()
@@ -1504,16 +1682,12 @@ with st.sidebar:
         new_chat()
         st.rerun()
 
-    room_names = list(
-        st.session_state.rooms
-    )
+    names = list(st.session_state.rooms)
 
     selected_room = st.selectbox(
         "Chat History",
-        room_names,
-        index=room_names.index(
-            st.session_state.room
-        ),
+        names,
+        index=names.index(st.session_state.room),
         disabled=st.session_state.pending
     )
 
@@ -1523,33 +1697,33 @@ with st.sidebar:
         st.rerun()
 
 
-# ====================================================
-# 10. QUANTUM ENERGY FLOW / CHATGPT STYLE
-# ====================================================
+# ======================================================
+# 11. QUANTUM ENERGY FLOW + CHATGPT STYLE
+# ======================================================
 
 if theme == "Light":
-    bg = "#f7faff"
-    ink = "#18243d"
-    bubble_bg = "#dfeafe"
-    bubble_ink = "#15213d"
-    sidebar = "rgba(245,249,255,.96)"
-    input_bg = "rgba(255,255,255,.95)"
+    background = "#f7f9ff"
+    foreground = "#17233c"
+    user_bg = "#dfeafe"
+    user_fg = "#15213d"
+    sidebar_bg = "rgba(245,249,255,.97)"
+    chat_bg = "rgba(255,255,255,.96)"
 
 elif theme == "Ocean Blue":
-    bg = "#07172e"
-    ink = "#e9f8ff"
-    bubble_bg = "#164572"
-    bubble_ink = "#ffffff"
-    sidebar = "rgba(5,24,48,.96)"
-    input_bg = "rgba(15,48,86,.96)"
+    background = "#07172e"
+    foreground = "#e8f6ff"
+    user_bg = "#174775"
+    user_fg = "#ffffff"
+    sidebar_bg = "rgba(5,23,46,.96)"
+    chat_bg = "rgba(15,48,86,.97)"
 
 else:
-    bg = "#080f20"
-    ink = "#ecf5ff"
-    bubble_bg = "#354c73"
-    bubble_ink = "#ffffff"
-    sidebar = "rgba(9,16,33,.96)"
-    input_bg = "rgba(22,34,60,.96)"
+    background = "#080f20"
+    foreground = "#ecf5ff"
+    user_bg = "#354c73"
+    user_fg = "#ffffff"
+    sidebar_bg = "rgba(9,16,33,.96)"
+    chat_bg = "rgba(22,34,60,.96)"
 
 
 st.markdown(
@@ -1559,17 +1733,18 @@ st.markdown(
 .stApp {{
     background:
         radial-gradient(
-            ellipse at 20% 17%,
-            rgba(50,140,240,.16),
-            transparent 42%
-        ),
-        radial-gradient(
-            ellipse at 85% 65%,
-            rgba(146,65,230,.16),
+            ellipse at 18% 17%,
+            rgba(46,149,245,.16),
             transparent 40%
         ),
-        {bg};
-    color: {ink};
+        radial-gradient(
+            ellipse at 84% 66%,
+            rgba(149,74,230,.16),
+            transparent 42%
+        ),
+        {background};
+
+    color:{foreground};
 }}
 
 .stApp::before {{
@@ -1580,30 +1755,27 @@ st.markdown(
 
     background:
         radial-gradient(
-            ellipse at 15% 50%,
-            rgba(33,181,255,.15),
+            ellipse at 20% 40%,
+            rgba(38,188,255,.15),
             transparent 35%
         ),
         radial-gradient(
             ellipse at 80% 35%,
-            rgba(162,81,255,.14),
+            rgba(167,85,247,.14),
             transparent 35%
         );
 
     animation:
-        edithQuantum 18s
+        quantumMove 18s
         ease-in-out infinite alternate;
 }}
 
-@keyframes edithQuantum {{
+@keyframes quantumMove {{
     from {{
-        transform:
-            translate(-2%,0%) scale(1);
+        transform:translate(-2%,0%) scale(1);
     }}
-
     to {{
-        transform:
-            translate(2%,-2%) scale(1.06);
+        transform:translate(2%,-2%) scale(1.06);
     }}
 }}
 
@@ -1612,20 +1784,20 @@ st.markdown(
 }}
 
 [data-testid="stSidebar"] > div:first-child {{
-    background:{sidebar};
+    background:{sidebar_bg};
 }}
 
 .stApp h1,
 .stApp h2,
 .stApp h3 {{
-    color:{ink};
+    color:{foreground};
 }}
 
 [data-testid="stChatMessage"] {{
     background:transparent;
     border:0;
-    border-radius:0;
     box-shadow:none;
+    border-radius:0;
     padding:14px 4px;
     margin-bottom:5px;
 }}
@@ -1635,7 +1807,7 @@ st.markdown(
 }}
 
 [data-testid="stChatInput"] > div {{
-    background:{input_bg};
+    background:{chat_bg};
     border-radius:22px;
     border:1px solid rgba(130,170,250,.23);
 }}
@@ -1664,14 +1836,14 @@ st.markdown(
 )
 
 
-# ====================================================
-# 11. MAIN PAGE
-# ====================================================
+# ======================================================
+# 12. MAIN APP
+# ======================================================
 
 st.title("🤖 E.D.I.T.H")
 
 st.caption(
-    "Your Personal AI Assistant • Galaxy Neural V2"
+    "Your Personal AI Assistant • Galaxy Neural V3"
 )
 
 voice_mode = (
@@ -1682,25 +1854,26 @@ voice_mode = (
 neural_mode = mode.startswith("Mode 3")
 
 
-# ====================================================
-# 12. DISPLAY VISUAL & PROCESS BUBBLE CLICKS
-# ====================================================
+# ======================================================
+# 13. VISUAL + BUBBLE ACTION HANDLER
+# ======================================================
 
 if voice_mode:
+
     last_audio_message = next(
         (
-            m
-            for m in reversed(history())
+            message
+            for message in reversed(history())
             if (
-                m["role"] == "assistant"
-                and m.get("audio")
+                message["role"] == "assistant"
+                and message.get("audio")
             )
         ),
         None
     )
 
-    audio_data = (
-        last_audio_message.get("audio")
+    last_audio = (
+        last_audio_message["audio"]
         if last_audio_message
         else None
     )
@@ -1714,82 +1887,63 @@ if voice_mode:
         else "neutral"
     )
 
-    event = display_visual(
+    bubble_event = render_visual(
         mode=(
             "neural"
             if neural_mode
             else "holo"
         ),
-        audio=audio_data,
-        emotion=last_emotion,
-        busy=st.session_state.pending
+        audio=last_audio,
+        emotion=last_emotion
     )
 
     if (
         neural_mode
         and not st.session_state.pending
-        and isinstance(event, dict)
+        and isinstance(bubble_event, dict)
     ):
-        event_id = event.get("id")
-        index = event.get("index")
+        event_id = bubble_event.get("id")
+        index = bubble_event.get("index")
 
         if (
             isinstance(event_id, str)
             and event_id
-            and event_id != st.session_state.bubble_event_seen
+            and event_id != st.session_state.last_bubble_event
             and type(index) is int
-            and 0 <= index < len(BUBBLE_COMMANDS)
+            and 0 <= index < len(BUBBLES)
         ):
-            st.session_state.bubble_event_seen = event_id
+            st.session_state.last_bubble_event = event_id
 
-            label, prompt, kind = (
-                BUBBLE_COMMANDS[index]
-            )
+            name, icon, kind, target = BUBBLES[index]
 
-            ask(
-                prompt,
-                force_search=(kind == "search")
-            )
+            # External app links are handled by
+            # the HTML component's link panel.
+            # AI commands are executed here.
+            if kind in ("ai", "search"):
+                st.session_state.active_bubble = name
 
-            st.rerun()
+                ask(
+                    target,
+                    search=(kind == "search")
+                )
+
+                st.rerun()
 
 if neural_mode:
     st.caption(
-        "✨ Tekan mana-mana bubble untuk "
-        "mengaktifkan fungsi AI."
+        "🫧 Tekan simbol dan nama di dalam bubble. "
+        "Bubble aplikasi membuka panel pautan; "
+        "bubble AI menghantar arahan kepada Groq."
     )
 
-    with st.expander(
-        "🫧 Senarai 55 Bubble Functions"
-    ):
-        for start in range(
-            0,
-            len(BUBBLE_COMMANDS),
-            11
-        ):
-            part = BUBBLE_COMMANDS[
-                start:start + 11
-            ]
 
-            st.write(
-                " • ".join(
-                    f"{start + i + 1}. {item[0]}"
-                    for i, item in enumerate(part)
-                )
-            )
-
-
-# ====================================================
-# 13. GROQ CONNECTION
-# ====================================================
+# ======================================================
+# 14. GROQ CONNECTION
+# ======================================================
 
 try:
-    api_key = st.secrets[
-        "GROQ_API_KEY"
-    ]
-
     client = Groq(
-        api_key=api_key
+        api_key=st.secrets["GROQ_API_KEY"]
     )
 
 except (
@@ -1798,90 +1952,72 @@ except (
     ValueError
 ):
     st.error(
-        "GROQ_API_KEY tidak dijumpai. "
-        "Masukkan API key dalam "
-        "Streamlit Cloud Secrets."
+        "GROQ_API_KEY tiada dalam Streamlit "
+        "Cloud Secrets."
     )
     st.stop()
 
 
-# ====================================================
-# 14. FILE UPLOAD
-# ====================================================
+# ======================================================
+# 15. FILE UPLOAD
+# ======================================================
 
 with st.expander(
     "📎 Upload File / Image"
 ):
     document = st.file_uploader(
         "PDF / Word / TXT",
-        type=[
-            "pdf",
-            "docx",
-            "txt"
-        ]
+        type=["pdf", "docx", "txt"]
     )
 
-    image_file = st.file_uploader(
+    image_upload = st.file_uploader(
         "JPG / PNG",
-        type=[
-            "jpg",
-            "jpeg",
-            "png"
-        ]
+        type=["jpg", "jpeg", "png"]
     )
 
 doc_context = ""
 
 if document is not None:
     try:
-        doc_context = read_document(
-            document
-        )
+        doc_context = read_document(document)
 
         if doc_context.strip():
-            st.success(
-                "Dokumen berjaya dibaca."
-            )
+            st.success("Dokumen berjaya dibaca.")
         else:
-            st.warning(
-                "Dokumen tidak mengandungi "
-                "teks yang boleh dibaca."
-            )
+            st.warning("Tiada teks ditemui.")
 
-    except Exception as exc:
+    except Exception as error:
         st.warning(
             "Document error: "
-            + type(exc).__name__
+            + type(error).__name__
         )
 
 image_bytes = None
 
-if image_file is not None:
-    data = image_file.getvalue()
+if image_upload is not None:
+    image_bytes = image_upload.getvalue()
 
-    if len(data) <= 4 * 1024 * 1024:
-        image_bytes = data
-
+    if len(image_bytes) <= 4 * 1024 * 1024:
         st.image(
             image_bytes,
             width=250,
-            caption="Uploaded image"
+            caption="Uploaded Image"
         )
     else:
-        st.warning(
-            "Gambar melebihi 4 MB."
-        )
+        st.warning("Gambar melebihi 4 MB.")
+        image_bytes = None
 
 
-# ====================================================
-# 15. MODE 3 VOICE COMMANDS
-# ====================================================
+# ======================================================
+# 16. VOICE COMMANDS - MODE 3
+# ======================================================
 
 if neural_mode:
+
     with st.expander(
-        "🎙️ Voice Commands + AI Actions",
-        expanded=False
+        "🎙️ Voice Commands + AI Actions"
     ):
+
         recorded = st.audio_input(
             "Rakam arahan suara E.D.I.T.H",
             sample_rate=16000
@@ -1895,63 +2031,54 @@ if neural_mode:
             )
         ):
             try:
-                sound_bytes = recorded.getvalue()
+                sound = recorded.getvalue()
 
-                if not sound_bytes:
-                    st.warning(
-                        "Rakaman kosong."
-                    )
+                if not sound:
+                    st.warning("Rakaman kosong.")
 
-                elif len(sound_bytes) > (
-                    20 * 1024 * 1024
-                ):
-                    st.warning(
-                        "Rakaman terlalu besar."
-                    )
+                elif len(sound) > 20 * 1024 * 1024:
+                    st.warning("Rakaman terlalu besar.")
 
                 else:
                     with st.spinner(
-                        "Transcribing voice..."
+                        "Menukar suara kepada teks..."
                     ):
-                        transcript = (
+                        result = (
                             client.audio.transcriptions.create(
                                 model=STT_MODEL,
-                                file=(
-                                    "voice.wav",
-                                    sound_bytes
-                                ),
+                                file=("voice.wav", sound),
                                 response_format="json"
                             )
                         )
 
-                    spoken = (
-                        transcript.text or ""
+                    transcript = (
+                        result.text or ""
                     ).strip()
 
-                    if spoken:
-                        ask(spoken)
+                    if transcript:
+                        ask(transcript)
                         st.rerun()
                     else:
                         st.warning(
-                            "Tiada suara dikesan."
+                            "Tiada arahan suara dikesan."
                         )
 
-            except Exception as exc:
+            except Exception as error:
                 st.error(
-                    "Voice error: "
-                    + type(exc).__name__
+                    "Voice Command error: "
+                    + type(error).__name__
                 )
 
         st.caption(
             "Contoh: Telefon 0123456789 | "
             "Lokasi KLCC | "
-            "Cari di Google Arduino"
+            "Cari di Google robot Arduino"
         )
 
 
-# ====================================================
-# 16. REGENERATE LAST
-# ====================================================
+# ======================================================
+# 17. CHAT ACTIONS
+# ======================================================
 
 st.caption(
     f"💬 {st.session_state.room} • {ai_tool}"
@@ -1969,11 +2096,12 @@ if st.button(
     st.rerun()
 
 
-# ====================================================
-# 17. CHAT HISTORY
-# ====================================================
+# ======================================================
+# 18. SHOW CHAT HISTORY
+# ======================================================
 
 for i, message in enumerate(history()):
+
     if (
         st.session_state.pending
         and i == len(history()) - 1
@@ -1984,12 +2112,9 @@ for i, message in enumerate(history()):
 
     with st.chat_message(
         role,
-        avatar=(
-            "👤"
-            if role == "user"
-            else "🤖"
-        )
+        avatar="👤" if role == "user" else "🤖"
     ):
+
         if (
             role == "user"
             and st.session_state.editing == i
@@ -2024,29 +2149,25 @@ for i, message in enumerate(history()):
                 st.rerun()
 
         elif role == "user":
+
             safe = html.escape(
                 message["content"]
-            ).replace(
-                "\n",
-                "<br>"
-            )
+            ).replace("\n", "<br>")
 
             st.markdown(
                 f"""
 <div style="
     display:flex;
     justify-content:flex-end;
-    width:100%;
 ">
     <div style="
-        background:{bubble_bg};
-        color:{bubble_ink};
+        background:{user_bg};
+        color:{user_fg};
         padding:12px 17px;
-        border-radius:19px 19px 5px 19px;
         max-width:88%;
-        line-height:1.6;
+        border-radius:19px 19px 5px 19px;
         overflow-wrap:anywhere;
-        text-align:left;
+        line-height:1.6;
     ">
         {safe}
     </div>
@@ -2057,13 +2178,14 @@ for i, message in enumerate(history()):
 
             if st.button(
                 "✏️ Edit",
-                key=f"edit_button_{i}",
+                key=f"edit_{i}",
                 disabled=st.session_state.pending
             ):
                 st.session_state.editing = i
                 st.rerun()
 
         else:
+
             st.markdown(
                 message["content"]
                 or "_(Tiada jawapan)_"
@@ -2083,19 +2205,20 @@ for i, message in enumerate(history()):
                 ):
                     for source in message["sources"]:
                         st.link_button(
-                            source["title"]
-                            or "Source",
+                            source["title"] or "Source",
                             source["url"]
                         )
 
             action = message.get("action")
 
             if action:
+
                 st.markdown(
-                    "**AI Action — sahkan dahulu:**"
+                    "**AI Action — pengesahan pengguna:**"
                 )
 
-                if action["type"] == "dial":
+                if action["kind"] == "dial":
+
                     safe_url = html.escape(
                         action["url"],
                         quote=True
@@ -2108,35 +2231,31 @@ for i, message in enumerate(history()):
                     st.markdown(
                         '<a href="'
                         + safe_url
-                        + '" style="'
-                        + 'display:inline-block;'
-                        + 'padding:10px 16px;'
-                        + 'background:#217b9e;'
-                        + 'color:white;'
+                        + '" style="display:inline-block;'
+                        + 'padding:10px 15px;'
+                        + 'background:#1680ae;'
                         + 'border-radius:12px;'
-                        + 'text-decoration:none;">'
+                        + 'text-decoration:none;'
+                        + 'color:white;">'
                         + safe_label
                         + '</a>',
                         unsafe_allow_html=True
                     )
 
                     st.caption(
-                        "Aplikasi Phone akan dibuka "
-                        "jika disokong. "
+                        "Buka dialer sahaja. "
                         "Tekan Call sendiri."
                     )
+
                 else:
                     st.link_button(
                         action["label"],
                         action["url"]
                     )
 
-            if (
-                voice_mode
-                and message.get("audio")
-            ):
+            if voice_mode and message.get("audio"):
                 with st.expander(
-                    "🔊 Play response audio"
+                    "🔊 Previous Response Audio"
                 ):
                     st.audio(
                         message["audio"],
@@ -2144,9 +2263,9 @@ for i, message in enumerate(history()):
                     )
 
 
-# ====================================================
-# 18. CHAT INPUT
-# ====================================================
+# ======================================================
+# 19. CHAT INPUT
+# ======================================================
 
 question = st.chat_input(
     "Message E.D.I.T.H...",
@@ -2158,28 +2277,19 @@ if question and question.strip():
     st.rerun()
 
 
-# ====================================================
-# 19. GROQ AI RESPONSE
-# ====================================================
+# ======================================================
+# 20. GENERATE GROQ RESPONSE
+# ======================================================
 
 if st.session_state.pending:
-    messages = history()
-    reply_index = len(messages) - 1
 
-    user_message = messages[
-        reply_index - 1
-    ]
+    data = history()
 
-    user_question = user_message[
-        "content"
-    ]
+    reply_index = len(data) - 1
+    user_msg = data[reply_index - 1]
+    user_question = user_msg["content"]
 
-    force_search = user_message.get(
-        "force_search",
-        False
-    )
-
-    language_code = detect_language(
+    lang = detect_language(
         user_question,
         language
     )
@@ -2197,13 +2307,15 @@ if st.session_state.pending:
         "assistant",
         avatar="🤖"
     ):
+
         output = st.empty()
 
         try:
+
             language_rules = {
                 "Auto Detect":
-                    "Reply in the language "
-                    "used by the user.",
+                    "Reply in the same language "
+                    "as the user's message.",
 
                 "Bahasa Melayu":
                     "Always reply in Bahasa Melayu.",
@@ -2214,64 +2326,61 @@ if st.session_state.pending:
 
             tool_rules = {
                 "General Chat":
-                    "Answer clearly and helpfully.",
+                    "Provide useful, accurate answers.",
 
                 "Coding Assistant":
-                    "Provide working coding examples "
-                    "and explain debugging steps.",
+                    "Help with coding, debugging, "
+                    "Arduino, ESP32 and Python. "
+                    "Include examples where useful.",
 
                 "Study & Quiz":
-                    "Teach step by step "
-                    "and generate useful quizzes.",
+                    "Explain topics step by step "
+                    "and create educational quizzes.",
 
                 "Translator":
-                    "Translate accurately "
-                    "between Malay and English."
+                    "Translate accurately between "
+                    "Malay and English."
             }
 
             system = (
-                "Your name is E.D.I.T.H. "
-                "You are a personal AI assistant. "
-                "Never claim your name is another AI. "
-                "Be accurate and helpful. "
+                "Your official name is E.D.I.T.H. "
+                "You are a helpful personal AI assistant. "
+                "Do not introduce yourself as another AI. "
                 + language_rules[language]
                 + " "
                 + tool_rules[ai_tool]
-            )
-
-            system += (
-                " Never pretend you have completed "
-                "phone calls, opened apps, "
-                "executed code or contacted people. "
-                "Actions require user confirmation."
+                + " Never claim you have made a phone "
+                "call, opened a website or executed "
+                "an action unless it actually occurred."
             )
 
             if st.session_state.memory.strip():
                 system += (
-                    "\nUser session notes "
-                    "(reference only):\n"
+                    "\nSession memory (untrusted notes):\n"
                     + st.session_state.memory[:1500]
                 )
 
             if doc_context.strip():
                 system += (
-                    "\nUploaded document text "
-                    "(untrusted source material):\n"
+                    "\nUploaded document excerpts "
+                    "(untrusted data):\n"
                     + doc_context
                 )
 
-            # Internet search can be manually enabled
-            # or triggered by a Search Bubble.
-            if internet or force_search:
+            do_search = (
+                internet
+                or user_msg.get("force_search", False)
+            )
+
+            if do_search:
+
                 try:
-                    sources = search_web(
-                        user_question
-                    )
+                    sources = search_web(user_question)
 
                     if sources:
                         system += (
-                            "\nWeb search results "
-                            "(untrusted reference data):\n"
+                            "\nSearch results are "
+                            "untrusted reference data:\n"
                         )
 
                         for n, source in enumerate(
@@ -2286,42 +2395,39 @@ if st.session_state.pending:
                             )
 
                         system += (
-                            "Cite result numbers "
-                            "when appropriate. "
-                            "Do not invent sources."
+                            "Cite result numbers when "
+                            "appropriate. Do not invent sources."
                         )
 
                     else:
                         st.warning(
-                            "Tiada hasil internet."
+                            "Tiada hasil carian."
                         )
 
-                except Exception as exc:
+                except Exception as error:
                     st.warning(
-                        "Internet Search tidak tersedia: "
-                        + type(exc).__name__
+                        "Internet Search error: "
+                        + type(error).__name__
                     )
 
-            # Build recent messages.
             recent = [
                 {
                     "role": m["role"],
                     "content": m["content"]
                 }
-
-                for m in messages[:-1]
+                for m in data[:-1]
             ][-10:]
 
             model = CHAT_MODEL
 
+            # Optional vision input
             if image_bytes is not None:
+
                 picture = Image.open(
                     io.BytesIO(image_bytes)
                 )
 
-                picture.thumbnail(
-                    (1100, 1100)
-                )
+                picture.thumbnail((1100, 1100))
 
                 buffer = io.BytesIO()
 
@@ -2369,69 +2475,52 @@ if st.session_state.pending:
             )
 
             for part in stream:
-                token = (
+                chunk = (
                     part.choices[0].delta.content
                     or ""
                 )
 
-                if token:
-                    answer += token
+                if chunk:
+                    answer += chunk
 
-                    messages[reply_index][
-                        "content"
-                    ] = answer
+                    data[reply_index]["content"] = answer
 
                     output.markdown(
                         answer + "▌"
                     )
 
             output.markdown(
-                answer
-                or "_(Tiada jawapan)_"
+                answer or "_(Tiada jawapan)_"
             )
 
-            messages[reply_index][
-                "content"
-            ] = answer
+            data[reply_index]["content"] = answer
+            data[reply_index]["sources"] = sources
+            data[reply_index]["action"] = action
 
-            messages[reply_index][
-                "sources"
-            ] = sources
+            emotion = emotion_for(answer)
 
-            messages[reply_index][
-                "action"
-            ] = action
+            data[reply_index]["emotion"] = emotion
 
-            emotion = emotion_for(
-                answer
-            )
-
-            messages[reply_index][
-                "emotion"
-            ] = emotion
-
-            # Voice only in Modes 2 and 3
             if voice_mode and answer.strip():
+
                 try:
                     with st.spinner(
-                        "Generating voice..."
+                        "Generating E.D.I.T.H Voice..."
                     ):
                         sound = asyncio.run(
                             synthesize(
                                 answer,
-                                language_code
+                                lang
                             )
                         )
 
                     if sound:
-                        messages[reply_index][
-                            "audio"
-                        ] = sound
+                        data[reply_index]["audio"] = sound
 
-                except Exception as exc:
+                except Exception as error:
                     st.warning(
-                        "Voice tidak tersedia: "
-                        + type(exc).__name__
+                        "Voice error: "
+                        + type(error).__name__
                     )
 
             if sources:
@@ -2444,26 +2533,28 @@ if st.session_state.pending:
                             source["url"]
                         )
 
-        except Exception as exc:
+            if action:
+                st.info(
+                    "AI Action tersedia dalam "
+                    "jawapan selepas dikemas kini. "
+                    "Sahkan tindakan sendiri."
+                )
+
+        except Exception as error:
+
             st.error(
                 "E.D.I.T.H gagal menjawab. "
-                "Semak sambungan Groq, "
-                "model dan kuota API."
+                "Semak Groq API key, model "
+                "atau kuota penggunaan."
             )
 
             st.caption(
                 "Error type: "
-                + type(exc).__name__
+                + type(error).__name__
             )
 
-            messages[reply_index][
-                "failed"
-            ] = True
-
             if not answer:
-                messages[reply_index][
-                    "content"
-                ] = (
+                data[reply_index]["content"] = (
                     "Ralat AI. "
                     "Cuba Regenerate Last."
                 )
@@ -2471,5 +2562,4 @@ if st.session_state.pending:
         finally:
             st.session_state.pending = False
 
-    # Re-enable input after generating.
     st.rerun()
