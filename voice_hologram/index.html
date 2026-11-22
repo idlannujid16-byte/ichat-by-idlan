@@ -1,0 +1,3066 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>NOVA V11 Voice Assistant</title>
+
+<style>
+
+/* =========================================
+   NOVA PREMIUM DESIGN
+========================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+
+    font-family: Arial, sans-serif;
+
+    background: transparent;
+    color: #e5f3ff;
+
+    --accent: #67e4ff;
+}
+
+.container {
+
+    position: relative;
+
+    overflow: hidden;
+
+    text-align: center;
+
+    padding: 25px 15px;
+
+    border-radius: 25px;
+
+    border: 1px solid #29465e;
+
+    background:
+        radial-gradient(
+            ellipse at 50% 35%,
+            #173b59,
+            #070f1c 75%
+        );
+
+}
+
+.brand {
+
+    font-size: 30px;
+
+    font-weight: bold;
+
+    letter-spacing: 9px;
+
+    color: #e2f6ff;
+
+    text-shadow:
+        0 0 20px #47bfff55;
+
+}
+
+.subtitle {
+
+    font-size: 10px;
+
+    letter-spacing: 3px;
+
+    color: #8faec8;
+
+    margin-top: 8px;
+
+}
+
+
+/* =========================================
+   ROBOT ANIMATION
+========================================= */
+
+#robot {
+
+    display: block;
+
+    width: 320px;
+
+    max-width: 100%;
+
+    margin: 15px auto 0;
+
+    cursor: pointer;
+
+    touch-action: none;
+
+    user-select: none;
+
+    -webkit-user-select: none;
+
+    -webkit-touch-callout: none;
+
+}
+
+.head {
+
+    animation:
+        floating 4s ease-in-out infinite;
+
+}
+
+.eyes {
+
+    transform-box: fill-box;
+
+    transform-origin: center;
+
+    animation:
+        blinking 5s infinite;
+
+}
+
+@keyframes floating {
+
+    0%,100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+
+}
+
+@keyframes blinking {
+
+    0%,45%,50%,100% {
+        transform: scaleY(1);
+    }
+
+    47% {
+        transform: scaleY(0.07);
+    }
+
+}
+
+
+/* =========================================
+   AUDIO WAVE
+========================================= */
+
+#wave {
+
+    display: block;
+
+    width: 100%;
+
+    max-width: 480px;
+
+    height: 90px;
+
+    margin: -5px auto 5px;
+
+}
+
+
+/* =========================================
+   STATUS
+========================================= */
+
+#status {
+
+    color: var(--accent);
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    letter-spacing: 4px;
+
+    text-shadow:
+        0 0 12px var(--accent);
+
+}
+
+#hint {
+
+    min-height: 35px;
+
+    margin: 12px 0;
+
+    color: #a7bfd3;
+
+    font-size: 12px;
+
+    line-height: 1.7;
+
+}
+
+
+/* =========================================
+   LONG PRESS PROGRESS
+========================================= */
+
+.progress {
+
+    width: 120px;
+
+    height: 3px;
+
+    background: #203950;
+
+    border-radius: 10px;
+
+    margin: 13px auto;
+
+    overflow: hidden;
+
+}
+
+#progressFill {
+
+    background: var(--accent);
+
+    height: 100%;
+
+    width: 0%;
+
+}
+
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+button {
+
+    border: 1px solid #447ba1;
+
+    border-radius: 25px;
+
+    background: #163149;
+
+    color: #daf5ff;
+
+    padding: 12px 24px;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+
+}
+
+button:hover {
+
+    background: #224b68;
+
+    box-shadow:
+        0 0 18px #38bfff33;
+
+}
+
+button:disabled {
+
+    opacity: .5;
+
+    cursor: default;
+
+}
+
+#endButton {
+
+    background: #3b2232;
+
+    border-color: #986078;
+
+    color: #ffc2d0;
+
+}
+
+[hidden] {
+
+    display: none !important;
+
+}
+
+
+/* =========================================
+   AUDIO PLAYER
+========================================= */
+
+audio {
+
+    width: 95%;
+
+    max-width: 390px;
+
+    margin-top: 15px;
+
+    height: 40px;
+
+}
+
+#micStatus {
+
+    color: #9cb6ce;
+
+    font-size: 11px;
+
+    margin-top: 16px;
+
+}
+
+.footer {
+
+    color: #6f8ba4;
+
+    font-size: 10px;
+
+    letter-spacing: 2px;
+
+    margin-top: 20px;
+
+}
+
+@media(max-width: 500px) {
+
+    .container {
+
+        padding: 20px 10px;
+
+    }
+
+    #robot {
+
+        width: 280px;
+
+    }
+
+    .brand {
+
+        font-size: 25px;
+
+    }
+
+    #wave {
+
+        height: 75px;
+
+    }
+
+}
+
+@media(prefers-reduced-motion: reduce) {
+
+    .head,
+    .eyes {
+
+        animation: none;
+
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <div class="brand">
+        NOVA
+    </div>
+
+    <div class="subtitle">
+        NEURAL VOICE ASSISTANT
+    </div>
+
+
+    <!-- =================================
+         ROBOT FACE
+    ================================== -->
+
+    <svg
+        id="robot"
+        viewBox="0 0 320 235"
+        aria-label="Hold robot to activate voice chat"
+    >
+
+        <defs>
+
+            <linearGradient
+                id="shell"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1">
+
+                <stop
+                    offset="0%"
+                    stop-color="#FFFFFF"
+                />
+
+                <stop
+                    offset="100%"
+                    stop-color="#8FA8C1"
+                />
+
+            </linearGradient>
+
+            <linearGradient
+                id="visor"
+                x1="0"
+                y1="0"
+                x2="1"
+                y2="1">
+
+                <stop
+                    offset="0%"
+                    stop-color="#06101D"
+                />
+
+                <stop
+                    offset="100%"
+                    stop-color="#153148"
+                />
+
+            </linearGradient>
+
+            <filter id="glow">
+
+                <feGaussianBlur
+                    stdDeviation="3"
+                    result="blur"
+                />
+
+                <feMerge>
+
+                    <feMergeNode in="blur"/>
+
+                    <feMergeNode
+                        in="SourceGraphic"
+                    />
+
+                </feMerge>
+
+            </filter>
+
+        </defs>
+
+
+        <!-- Shadow -->
+
+        <ellipse
+
+            cx="160"
+
+            cy="224"
+
+            rx="90"
+
+            ry="5"
+
+            fill="#42BFFF"
+
+            opacity=".15"
+
+        />
+
+
+        <g class="head">
+
+
+            <!-- Left Ear -->
+
+            <rect
+
+                x="28"
+
+                y="87"
+
+                width="25"
+
+                height="60"
+
+                rx="13"
+
+                fill="#7894AF"
+
+            />
+
+
+            <!-- Right Ear -->
+
+            <rect
+
+                x="267"
+
+                y="87"
+
+                width="25"
+
+                height="60"
+
+                rx="13"
+
+                fill="#7894AF"
+
+            />
+
+
+            <!-- Main Robot Head -->
+
+            <rect
+
+                x="44"
+
+                y="28"
+
+                width="232"
+
+                height="180"
+
+                rx="70"
+
+                fill="url(#shell)"
+
+                stroke="#D8EFFF"
+
+                stroke-width="2"
+
+            />
+
+
+            <!-- Face Screen -->
+
+            <rect
+
+                x="59"
+
+                y="45"
+
+                width="202"
+
+                height="144"
+
+                rx="54"
+
+                fill="url(#visor)"
+
+                stroke="#34516B"
+
+                stroke-width="3"
+
+            />
+
+
+            <!-- LED Light -->
+
+            <path
+
+                d="M127 36 H193"
+
+                stroke="var(--accent)"
+
+                stroke-width="4"
+
+                stroke-linecap="round"
+
+                filter="url(#glow)"
+
+            />
+
+
+            <!-- Eyes -->
+
+            <g
+
+                class="eyes"
+
+                fill="var(--accent)"
+
+                filter="url(#glow)"
+
+            >
+
+                <rect
+
+                    id="leftEye"
+
+                    x="99"
+
+                    y="85"
+
+                    width="32"
+
+                    height="40"
+
+                    rx="16"
+
+                />
+
+                <rect
+
+                    id="rightEye"
+
+                    x="189"
+
+                    y="85"
+
+                    width="32"
+
+                    height="40"
+
+                    rx="16"
+
+                />
+
+            </g>
+
+
+            <!-- Eyebrows -->
+
+            <path
+
+                id="brows"
+
+                d="M98 75 Q115 67 132 75
+                   M188 75 Q205 67 222 75"
+
+                stroke="var(--accent)"
+
+                stroke-width="2"
+
+                fill="none"
+
+                opacity="0"
+
+            />
+
+
+            <!-- Robot Mouth -->
+
+            <path
+
+                id="mouth"
+
+                d="M140 146 Q160 166 180 146"
+
+                fill="none"
+
+                stroke="var(--accent)"
+
+                stroke-width="5"
+
+                stroke-linecap="round"
+
+                filter="url(#glow)"
+
+            />
+
+
+            <!-- Robot Name -->
+
+            <text
+
+                x="160"
+
+                y="199"
+
+                font-family="Arial"
+
+                font-size="9"
+
+                letter-spacing="4"
+
+                text-anchor="middle"
+
+                fill="#365571"
+
+            >
+
+                NOVA
+
+            </text>
+
+        </g>
+
+    </svg>
+
+
+    <!-- Audio Reactive Wave -->
+
+    <canvas id="wave"></canvas>
+
+
+    <!-- Status -->
+
+    <div id="status" role="status" aria-live="polite">
+
+        STANDBY
+
+    </div>
+
+
+    <!-- Long Press Progress -->
+
+    <div class="progress">
+
+        <div id="progressFill"></div>
+
+    </div>
+
+
+    <div id="hint">
+
+        Hold NOVA for 1 second to start Voice Chat.
+
+    </div>
+
+
+    <!-- Voice Buttons -->
+
+    <button id="startButton">
+
+        🎙 Start Voice Chat
+
+    </button>
+
+
+    <button id="endButton" hidden>
+
+        End Voice Chat
+
+    </button>
+
+
+    <!-- Voice Audio -->
+
+    <audio
+
+        id="audio"
+
+        controls
+
+        preload="auto"
+
+        hidden
+
+    ></audio>
+
+
+    <div id="micStatus">
+
+        Microphone off
+
+    </div>
+
+
+    <div class="footer">
+
+        NOVA V11 · DEVELOPED BY IDLAN
+
+    </div>
+
+</div>
+
+
+<script>
+
+"use strict";
+
+
+// =========================================
+// ELEMENTS
+// =========================================
+
+const $ = id =>
+    document.getElementById(id);
+
+const robot = $("robot");
+
+const audio = $("audio");
+
+const canvas = $("wave");
+
+const ctx = canvas.getContext("2d");
+
+const mouth = $("mouth");
+
+
+// =========================================
+// STREAMLIT COMMUNICATION
+// =========================================
+
+function post(type, extra = {}) {
+
+    window.parent.postMessage({
+
+        isStreamlitMessage: true,
+
+        type,
+
+        ...extra
+
+    }, "*");
+
+}
+
+
+function resizeFrame() {
+
+    post(
+
+        "streamlit:setFrameHeight",
+
+        {
+
+            height:
+                Math.ceil(
+                    document.body.scrollHeight
+                ) + 4
+
+        }
+
+    );
+
+}
+
+
+// =========================================
+// VARIABLES
+// =========================================
+
+let args = {};
+
+let session = "";
+
+let active = false;
+
+let starting = false;
+
+let busy = false;
+
+let state = "STANDBY";
+
+let generation = 0;
+
+let waiting = "";
+
+let baseline = "";
+
+let seenReply = "";
+
+let stream = null;
+
+let audioContext = null;
+
+let micSource = null;
+
+let micAnalyser = null;
+
+let micData = null;
+
+let outputAnalyser = null;
+
+let outputData = null;
+
+let capture = null;
+
+let encoding = false;
+
+let holdTimer = null;
+
+let holdStart = 0;
+
+let replyTimer = null;
+
+let time = 0;
+
+let energy = 0;
+
+let blockedReply = "";
+
+
+// =========================================
+// STATUS COLORS
+// =========================================
+
+const colors = {
+
+    STANDBY: "#67E4FF",
+
+    LISTENING: "#57FFB8",
+
+    THINKING: "#B399FF",
+
+    SPEAKING: "#67E4FF",
+
+    PAUSED: "#FFD166",
+
+    ERROR: "#FF8197"
+
+};
+
+
+// =========================================
+// CHANGE ROBOT STATUS
+// =========================================
+
+function setStatus(value, message) {
+
+    state = value;
+
+    document.body.style.setProperty(
+
+        "--accent",
+
+        colors[value] || colors.STANDBY
+
+    );
+
+    $("status").textContent = value;
+
+    const messages = {
+
+        STANDBY:
+            "Hold NOVA for 1 second to start Voice Chat.",
+
+        LISTENING:
+            "Speak naturally. NOVA is listening.",
+
+        THINKING:
+            "NOVA is processing your request...",
+
+        SPEAKING:
+            "NOVA is responding...",
+
+        PAUSED:
+            "Press Play to hear NOVA.",
+
+        ERROR:
+            "Check microphone or internet connection."
+
+    };
+
+    $("hint").textContent =
+
+        message || messages[value] || "";
+
+    $("startButton").hidden =
+
+        active || starting;
+
+    $("startButton").disabled =
+
+        busy || Boolean(waiting) || !session;
+
+    $("endButton").hidden =
+
+        !(active || starting);
+
+    const micOn =
+
+        stream?.getAudioTracks().some(
+
+            track =>
+
+                track.enabled &&
+
+                track.readyState === "live"
+
+        );
+
+    $("micStatus").textContent =
+
+        micOn
+
+        ? "● Microphone on"
+
+        : "Microphone off";
+
+    $("micStatus").style.color =
+
+        micOn
+
+        ? "#57FFB8"
+
+        : "#9CB6CE";
+
+    resizeFrame();
+
+}
+
+
+// =========================================
+// WEB AUDIO
+// =========================================
+
+async function prepareAudio() {
+
+    const AudioContextClass =
+
+        window.AudioContext ||
+
+        window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+
+        throw new Error(
+            "Web Audio unavailable"
+        );
+
+    }
+
+    if (!audioContext) {
+
+        audioContext =
+
+            new AudioContextClass();
+
+    }
+
+    if (!outputAnalyser) {
+
+        outputAnalyser =
+
+            audioContext.createAnalyser();
+
+        outputAnalyser.fftSize = 1024;
+
+        outputData =
+
+            new Float32Array(1024);
+
+        const outputSource =
+
+            audioContext.createMediaElementSource(
+
+                audio
+
+            );
+
+        outputSource.connect(
+
+            outputAnalyser
+
+        );
+
+        outputAnalyser.connect(
+
+            audioContext.destination
+
+        );
+
+    }
+
+    if (audioContext.state === "suspended") {
+
+        await audioContext.resume();
+
+    }
+
+}
+
+
+// =========================================
+// MEASURE REAL AUDIO AMPLITUDE
+// =========================================
+
+function rms(analyser, data) {
+
+    if (!analyser || !data) {
+
+        return 0;
+
+    }
+
+    analyser.getFloatTimeDomainData(data);
+
+    let total = 0;
+
+    for (const value of data) {
+
+        total += value * value;
+
+    }
+
+    return Math.sqrt(
+
+        total / data.length
+
+    );
+
+}
+
+
+// =========================================
+// MICROPHONE CONTROL
+// =========================================
+
+function microphone(enabled) {
+
+    stream?.getAudioTracks().forEach(
+
+        track => {
+
+            track.enabled = enabled;
+
+        }
+
+    );
+
+    const on = Boolean(
+
+        enabled && stream
+
+    );
+
+    $("micStatus").textContent =
+
+        on
+
+        ? "● Microphone on"
+
+        : "Microphone off";
+
+    $("micStatus").style.color =
+
+        on
+
+        ? "#57FFB8"
+
+        : "#9CB6CE";
+
+}
+
+
+function releaseMic() {
+
+    stream?.getTracks().forEach(
+
+        track => track.stop()
+
+    );
+
+    try {
+
+        micSource?.disconnect();
+
+    } catch (_) {}
+
+    stream = null;
+
+    micSource = null;
+
+    micAnalyser = null;
+
+    micData = null;
+
+    microphone(false);
+
+}
+
+
+// =========================================
+// START CONTINUOUS VOICE CHAT
+// =========================================
+
+async function startVoice() {
+
+    if (
+
+        active ||
+
+        starting ||
+
+        busy ||
+
+        waiting ||
+
+        !session
+
+    ) {
+
+        return;
+
+    }
+
+    const token = ++generation;
+
+    starting = true;
+
+    setStatus(
+
+        "STANDBY",
+
+        "Requesting microphone permission..."
+
+    );
+
+    try {
+
+        if (
+
+            !navigator.mediaDevices?.getUserMedia
+
+            || !window.MediaRecorder
+
+        ) {
+
+            throw new Error(
+
+                "Microphone not supported"
+
+            );
+
+        }
+
+        await prepareAudio();
+
+        const recordingStream =
+
+            await navigator.mediaDevices.getUserMedia({
+
+                audio: {
+
+                    echoCancellation: true,
+
+                    noiseSuppression: true,
+
+                    autoGainControl: true,
+
+                    channelCount: 1
+
+                }
+
+            });
+
+        if (token !== generation) {
+
+            recordingStream.getTracks().forEach(
+
+                track => track.stop()
+
+            );
+
+            return;
+
+        }
+
+        stream = recordingStream;
+
+        micSource =
+
+            audioContext.createMediaStreamSource(
+
+                stream
+
+            );
+
+        micAnalyser =
+
+            audioContext.createAnalyser();
+
+        micAnalyser.fftSize = 1024;
+
+        micData =
+
+            new Float32Array(1024);
+
+        micSource.connect(
+
+            micAnalyser
+
+        );
+
+        stream.getAudioTracks().forEach(
+
+            track => {
+
+                track.addEventListener(
+
+                    "ended",
+
+                    () => {
+
+                        if (token === generation) {
+
+                            stopVoice();
+
+                            setStatus(
+
+                                "ERROR",
+
+                                "Microphone disconnected."
+
+                            );
+
+                        }
+
+                    }
+
+                );
+
+            }
+
+        );
+
+        audio.pause();
+
+        starting = false;
+
+        active = true;
+
+        blockedReply = "";
+
+        setStatus("LISTENING");
+
+        beginListening();
+
+    } catch (error) {
+
+        if (token !== generation) {
+
+            return;
+
+        }
+
+        stopVoice();
+
+        setStatus(
+
+            "ERROR",
+
+            "Allow microphone permission or use Manual Voice Input."
+
+        );
+
+    }
+
+}
+
+
+// =========================================
+// STOP VOICE CHAT
+// =========================================
+
+function stopVoice() {
+
+    generation++;
+
+    active = false;
+
+    starting = false;
+
+    encoding = false;
+
+    if (waiting) {
+
+        blockedReply = waiting;
+
+    }
+
+    if (capture) {
+
+        capture.discard = true;
+
+        try {
+
+            if (
+
+                capture.recorder.state !== "inactive"
+
+            ) {
+
+                capture.recorder.stop();
+
+            }
+
+        } catch (_) {}
+
+        capture = null;
+
+    }
+
+    audio.pause();
+
+    releaseMic();
+
+    energy = 0;
+
+    setStatus(
+
+        busy || waiting
+
+        ? "THINKING"
+
+        : "STANDBY",
+
+        "Voice Chat ended. Microphone off."
+
+    );
+
+}
+
+
+// =========================================
+// RECORDING FORMAT
+// =========================================
+
+function recordingOptions() {
+
+    const supportedTypes = [
+
+        "audio/webm;codecs=opus",
+
+        "audio/mp4",
+
+        "audio/ogg;codecs=opus",
+
+        "audio/webm"
+
+    ];
+
+    for (const type of supportedTypes) {
+
+        if (
+
+            MediaRecorder.isTypeSupported(type)
+
+        ) {
+
+            return {
+
+                mimeType: type
+
+            };
+
+        }
+
+    }
+
+    return {};
+
+}
+
+
+// =========================================
+// FINISH RECORDING
+// =========================================
+
+function finishRecording(discard = false) {
+
+    if (!capture) {
+
+        return;
+
+    }
+
+    capture.discard =
+
+        capture.discard || discard;
+
+    if (capture.stopping) {
+
+        return;
+
+    }
+
+    capture.stopping = true;
+
+    if (!discard) {
+
+        microphone(false);
+
+        setStatus("THINKING");
+
+    }
+
+    if (
+
+        capture.recorder.state !== "inactive"
+
+    ) {
+
+        capture.recorder.stop();
+
+    }
+
+}
+
+
+// =========================================
+// LISTEN TO USER
+// =========================================
+
+function beginListening() {
+
+    if (
+
+        !active ||
+
+        busy ||
+
+        waiting ||
+
+        encoding ||
+
+        capture ||
+
+        !stream ||
+
+        !audio.paused ||
+
+        state === "PAUSED"
+
+    ) {
+
+        return;
+
+    }
+
+    microphone(true);
+
+    const token = generation;
+
+    try {
+
+        const recorder =
+
+            new MediaRecorder(
+
+                stream,
+
+                recordingOptions()
+
+            );
+
+        const current = {
+
+            recorder,
+
+            chunks: [],
+
+            start: performance.now(),
+
+            firstSpeech: 0,
+
+            lastSpeech: 0,
+
+            discard: false,
+
+            stopping: false
+
+        };
+
+        capture = current;
+
+
+        recorder.ondataavailable = event => {
+
+            if (event.data.size > 0) {
+
+                current.chunks.push(
+
+                    event.data
+
+                );
+
+            }
+
+        };
+
+
+        recorder.onerror = () => {
+
+            if (token !== generation) {
+
+                return;
+
+            }
+
+            stopVoice();
+
+            setStatus(
+
+                "ERROR",
+
+                "Recording failed. Restart Voice Chat."
+
+            );
+
+        };
+
+
+        recorder.onstop = async () => {
+
+            if (capture === current) {
+
+                capture = null;
+
+            }
+
+            if (
+
+                token !== generation
+
+                || !active
+
+            ) {
+
+                return;
+
+            }
+
+            if (
+
+                current.discard
+
+                || !current.firstSpeech
+
+            ) {
+
+                if (
+
+                    !busy &&
+
+                    !waiting &&
+
+                    state === "LISTENING"
+
+                ) {
+
+                    beginListening();
+
+                }
+
+                return;
+
+            }
+
+            encoding = true;
+
+            microphone(false);
+
+            setStatus("THINKING");
+
+            try {
+
+                const mime =
+
+                    recorder.mimeType ||
+
+                    current.chunks[0]?.type ||
+
+                    "audio/webm";
+
+                const blob = new Blob(
+
+                    current.chunks,
+
+                    {type: mime}
+
+                );
+
+                if (!blob.size) {
+
+                    throw new Error(
+
+                        "Empty recording"
+
+                    );
+
+                }
+
+                const encoded =
+
+                    await new Promise(
+
+                        (resolve, reject) => {
+
+                            const reader =
+
+                                new FileReader();
+
+                            reader.onload = () => {
+
+                                resolve(
+
+                                    String(reader.result)
+
+                                        .split(",")[1]
+
+                                );
+
+                            };
+
+                            reader.onerror = reject;
+
+                            reader.readAsDataURL(blob);
+
+                        }
+
+                    );
+
+                if (
+
+                    token !== generation
+
+                    || !active
+
+                ) {
+
+                    return;
+
+                }
+
+                waiting =
+
+                    window.crypto?.randomUUID?.()
+
+                    || Date.now() + "-" + Math.random();
+
+                baseline = args.reply_id || "";
+
+                encoding = false;
+
+
+                // Send audio to app.py
+
+                post(
+
+                    "streamlit:setComponentValue",
+
+                    {
+
+                        value: {
+
+                            id: waiting,
+
+                            session_id: session,
+
+                            type: "voice",
+
+                            audio: encoded,
+
+                            mime: mime
+
+                        },
+
+                        dataType: "json"
+
+                    }
+
+                );
+
+
+                clearTimeout(replyTimer);
+
+                replyTimer = setTimeout(
+
+                    () => {
+
+                        if (waiting) {
+
+                            waiting = "";
+
+                            busy = false;
+
+                            stopVoice();
+
+                            setStatus(
+
+                                "ERROR",
+
+                                "Response timed out. Try again."
+
+                            );
+
+                        }
+
+                    },
+
+                    180000
+
+                );
+
+            } catch (error) {
+
+                if (token === generation) {
+
+                    stopVoice();
+
+                    setStatus(
+
+                        "ERROR",
+
+                        "Unable to send recording."
+
+                    );
+
+                }
+
+            }
+
+        };
+
+        recorder.start();
+
+        setStatus("LISTENING");
+
+    } catch (error) {
+
+        stopVoice();
+
+        setStatus(
+
+            "ERROR",
+
+            "Unable to start voice recording."
+
+        );
+
+    }
+
+}
+
+
+// =========================================
+// AUTO SILENCE DETECTION
+// =========================================
+
+const voiceTimer = setInterval(
+
+    () => {
+
+        if (
+
+            !active ||
+
+            state !== "LISTENING" ||
+
+            !capture ||
+
+            capture.stopping
+
+        ) {
+
+            return;
+
+        }
+
+        const now = performance.now();
+
+        const current = capture;
+
+        const volume = rms(
+
+            micAnalyser,
+
+            micData
+
+        );
+
+        const threshold =
+
+            Number(args.threshold)
+
+            || 0.018;
+
+        const silenceTime =
+
+            Number(args.silence_ms)
+
+            || 1500;
+
+
+        if (volume > threshold) {
+
+            if (!current.firstSpeech) {
+
+                current.firstSpeech = now;
+
+            }
+
+            current.lastSpeech = now;
+
+        }
+
+
+        // Send after 1.5 seconds of silence
+
+        if (
+
+            current.firstSpeech &&
+
+            now - current.lastSpeech >= silenceTime
+
+        ) {
+
+            const duration =
+
+                current.lastSpeech
+
+                - current.firstSpeech;
+
+            finishRecording(
+
+                duration < 150
+
+            );
+
+            return;
+
+        }
+
+
+        // Maximum recording: 30 seconds
+
+        if (
+
+            now - current.start >= 30000
+
+        ) {
+
+            finishRecording(
+
+                !current.firstSpeech
+
+            );
+
+            return;
+
+        }
+
+
+        // Discard quiet recording locally
+
+        if (
+
+            !current.firstSpeech &&
+
+            now - current.start >= 15000
+
+        ) {
+
+            finishRecording(true);
+
+        }
+
+    },
+
+    50
+
+);
+
+
+// =========================================
+// PLAY NOVA VOICE
+// =========================================
+
+async function playReply() {
+
+    try {
+
+        await prepareAudio();
+
+        await audio.play();
+
+    } catch (error) {
+
+        setStatus(
+
+            "PAUSED",
+
+            "Autoplay blocked. Press Play below."
+
+        );
+
+    }
+
+}
+
+
+function loadReply(encoded, autoplay) {
+
+    audio.pause();
+
+    if (!encoded) {
+
+        audio.hidden = true;
+
+        audio.removeAttribute("src");
+
+        setStatus(
+
+            active
+
+            ? "LISTENING"
+
+            : "STANDBY"
+
+        );
+
+        if (active) {
+
+            beginListening();
+
+        }
+
+        return;
+
+    }
+
+    microphone(false);
+
+    audio.src =
+
+        "data:audio/mpeg;base64,"
+
+        + encoded;
+
+    audio.hidden = false;
+
+    if (autoplay) {
+
+        setStatus("PAUSED");
+
+        playReply();
+
+    } else {
+
+        setStatus(
+
+            "STANDBY",
+
+            "Press Play to hear NOVA."
+
+        );
+
+    }
+
+    resizeFrame();
+
+}
+
+
+// =========================================
+// AUDIO STARTED
+// =========================================
+
+audio.addEventListener(
+
+    "play",
+
+    () => {
+
+        prepareAudio().catch(
+
+            () => {}
+
+        );
+
+        setStatus("SPEAKING");
+
+        finishRecording(true);
+
+        microphone(false);
+
+    }
+
+);
+
+
+// =========================================
+// AUDIO PAUSED
+// =========================================
+
+audio.addEventListener(
+
+    "pause",
+
+    () => {
+
+        if (
+
+            !audio.ended &&
+
+            state === "SPEAKING"
+
+        ) {
+
+            setStatus(
+
+                active
+
+                ? "PAUSED"
+
+                : "STANDBY"
+
+            );
+
+        }
+
+    }
+
+);
+
+
+// =========================================
+// NOVA FINISHED SPEAKING
+// =========================================
+
+audio.addEventListener(
+
+    "ended",
+
+    () => {
+
+        if (active) {
+
+            setStatus("LISTENING");
+
+            const token = generation;
+
+            setTimeout(
+
+                () => {
+
+                    if (
+
+                        active &&
+
+                        token === generation
+
+                    ) {
+
+                        beginListening();
+
+                    }
+
+                },
+
+                350
+
+            );
+
+        } else {
+
+            setStatus("STANDBY");
+
+        }
+
+    }
+
+);
+
+
+audio.addEventListener(
+
+    "error",
+
+    () => {
+
+        if (audio.getAttribute("src")) {
+
+            stopVoice();
+
+            setStatus(
+
+                "ERROR",
+
+                "Audio playback failed."
+
+            );
+
+        }
+
+    }
+
+);
+
+
+// =========================================
+// RECEIVE RESPONSE FROM STREAMLIT
+// =========================================
+
+window.addEventListener(
+
+    "message",
+
+    event => {
+
+        if (
+
+            event.source !== window.parent
+
+            || event.data?.type !== "streamlit:render"
+
+        ) {
+
+            return;
+
+        }
+
+        args = event.data.args || {};
+
+        const incomingSession =
+
+            args.session_id || "";
+
+
+        // Reset when chat session changes
+
+        if (
+
+            session &&
+
+            session !== incomingSession
+
+        ) {
+
+            clearTimeout(replyTimer);
+
+            stopVoice();
+
+            waiting = "";
+
+            baseline = "";
+
+            seenReply = "";
+
+            blockedReply = "";
+
+            busy = false;
+
+            audio.hidden = true;
+
+            audio.removeAttribute("src");
+
+            setStatus("STANDBY");
+
+        }
+
+        session = incomingSession;
+
+        busy = Boolean(args.busy);
+
+        const reply =
+
+            args.reply_id || "";
+
+
+        // Voice request completed
+
+        if (
+
+            waiting &&
+
+            args.ack_id === waiting &&
+
+            !busy &&
+
+            (
+
+                args.error
+
+                || reply !== baseline
+
+            )
+
+        ) {
+
+            clearTimeout(replyTimer);
+
+            const cancelled =
+
+                blockedReply === waiting;
+
+            waiting = "";
+
+            if (
+
+                args.error &&
+
+                reply === baseline
+
+            ) {
+
+                stopVoice();
+
+                setStatus(
+
+                    "ERROR",
+
+                    args.error
+
+                );
+
+            } else {
+
+                seenReply = reply;
+
+                loadReply(
+
+                    args.audio || "",
+
+                    active && !cancelled
+
+                );
+
+                if (
+
+                    args.error
+
+                    && !args.audio
+
+                ) {
+
+                    $("hint").textContent =
+
+                        args.error;
+
+                }
+
+            }
+
+        }
+
+
+        // AI is processing
+
+        else if (busy || waiting) {
+
+            finishRecording(true);
+
+            microphone(false);
+
+            setStatus("THINKING");
+
+        }
+
+
+        // New manual or command center reply
+
+        else if (
+
+            reply &&
+
+            reply !== seenReply
+
+        ) {
+
+            seenReply = reply;
+
+            setStatus("THINKING");
+
+            finishRecording(true);
+
+            loadReply(
+
+                args.audio || "",
+
+                true
+
+            );
+
+            if (
+
+                args.error
+
+                && !args.audio
+
+            ) {
+
+                $("hint").textContent =
+
+                    args.error;
+
+            }
+
+        }
+
+
+        // Continue listening
+
+        else if (
+
+            active &&
+
+            !capture &&
+
+            !encoding &&
+
+            state !== "PAUSED" &&
+
+            state !== "SPEAKING"
+
+        ) {
+
+            beginListening();
+
+        }
+
+
+        else if (
+
+            !active &&
+
+            !busy &&
+
+            !waiting &&
+
+            state === "THINKING"
+
+        ) {
+
+            setStatus("STANDBY");
+
+        }
+
+        $("startButton").disabled =
+
+            busy || Boolean(waiting) || !session;
+
+        resizeFrame();
+
+    }
+
+);
+
+
+// =========================================
+// LONG PRESS ACTIVATION
+// =========================================
+
+function toggleVoice() {
+
+    if (active || starting) {
+
+        stopVoice();
+
+    } else {
+
+        startVoice();
+
+    }
+
+}
+
+
+robot.addEventListener(
+
+    "pointerdown",
+
+    event => {
+
+        if (
+
+            event.pointerType === "mouse"
+
+            && event.button !== 0
+
+        ) {
+
+            return;
+
+        }
+
+        if (holdTimer) {
+
+            return;
+
+        }
+
+        event.preventDefault();
+
+        try {
+
+            robot.setPointerCapture(
+
+                event.pointerId
+
+            );
+
+        } catch (_) {}
+
+
+        // Unlock Web Audio using user gesture
+
+        if (!active && !busy) {
+
+            prepareAudio().catch(
+
+                () => {}
+
+            );
+
+        }
+
+        holdStart =
+
+            performance.now();
+
+
+        // Activate after 1 second
+
+        holdTimer = setTimeout(
+
+            () => {
+
+                holdStart = 0;
+
+                $("progressFill").style.width =
+
+                    "100%";
+
+                toggleVoice();
+
+            },
+
+            1000
+
+        );
+
+    }
+
+);
+
+
+function cancelHold() {
+
+    clearTimeout(holdTimer);
+
+    holdTimer = null;
+
+    holdStart = 0;
+
+    $("progressFill").style.width =
+
+        "0%";
+
+}
+
+
+robot.addEventListener(
+
+    "pointerup",
+
+    cancelHold
+
+);
+
+robot.addEventListener(
+
+    "pointercancel",
+
+    cancelHold
+
+);
+
+robot.addEventListener(
+
+    "lostpointercapture",
+
+    cancelHold
+
+);
+
+robot.addEventListener(
+
+    "contextmenu",
+
+    event => event.preventDefault()
+
+);
+
+
+$("startButton").onclick = startVoice;
+
+$("endButton").onclick = stopVoice;
+
+
+// =========================================
+// REAL AUDIO REACTIVE WAVEFORM
+// =========================================
+
+function animate() {
+
+    requestAnimationFrame(animate);
+
+    if (document.hidden) {
+
+        return;
+
+    }
+
+
+    // Long press progress
+
+    if (holdStart) {
+
+        const progress =
+
+            Math.min(
+
+                100,
+
+                (
+
+                    performance.now()
+
+                    - holdStart
+
+                ) / 10
+
+            );
+
+        $("progressFill").style.width =
+
+            progress + "%";
+
+    }
+
+
+    // Responsive canvas
+
+    const W = canvas.clientWidth;
+
+    const H = canvas.clientHeight;
+
+    const dpr =
+
+        Math.min(
+
+            window.devicePixelRatio || 1,
+
+            2
+
+        );
+
+    if (
+
+        canvas.width !== Math.round(W*dpr)
+
+        ||
+
+        canvas.height !== Math.round(H*dpr)
+
+    ) {
+
+        canvas.width = Math.round(W*dpr);
+
+        canvas.height = Math.round(H*dpr);
+
+    }
+
+    ctx.setTransform(
+
+        dpr, 0,
+
+        0, dpr,
+
+        0, 0
+
+    );
+
+    ctx.clearRect(
+
+        0, 0,
+
+        W, H
+
+    );
+
+    let samples = null;
+
+    let volume = 0;
+
+
+    // Real microphone sound
+
+    if (state === "LISTENING") {
+
+        samples = micData;
+
+        volume = rms(
+
+            micAnalyser,
+
+            micData
+
+        );
+
+    }
+
+
+    // Real AI voice output
+
+    else if (state === "SPEAKING") {
+
+        samples = outputData;
+
+        volume = rms(
+
+            outputAnalyser,
+
+            outputData
+
+        );
+
+    }
+
+    energy +=
+
+        (
+
+            Math.min(1, volume * 6)
+
+            - energy
+
+        ) * 0.3;
+
+    time += 0.045;
+
+    const color =
+
+        colors[state]
+
+        || colors.STANDBY;
+
+
+    // Draw 3 layers of smooth wave
+
+    for (
+
+        let layer = 0;
+
+        layer < 3;
+
+        layer++
+
+    ) {
+
+        ctx.beginPath();
+
+        for (
+
+            let x = 0;
+
+            x <= W;
+
+            x++
+
+        ) {
+
+            const p =
+
+                x / Math.max(W, 1);
+
+            const envelope =
+
+                Math.sin(Math.PI * p);
+
+            let y;
+
+
+            if (samples) {
+
+                const index =
+
+                    Math.min(
+
+                        samples.length - 1,
+
+                        Math.floor(
+
+                            p * (samples.length - 1)
+
+                        )
+
+                    );
+
+                const sample = samples[index];
+
+                const smoothWave =
+
+                    Math.sin(
+
+                        p * 27
+
+                        - time * 3
+
+                        + layer
+
+                    )
+
+                    * energy
+
+                    * H * 0.22;
+
+                y =
+
+                    H / 2
+
+                    +
+
+                    envelope *
+
+                    (
+
+                        sample * H * 0.75
+
+                        + smoothWave
+
+                    );
+
+            } else {
+
+
+                // Soft animation during standby
+
+                y =
+
+                    H / 2
+
+                    +
+
+                    envelope *
+
+                    Math.sin(
+
+                        p * 22
+
+                        - time
+
+                        + layer
+
+                    )
+
+                    * 3;
+
+            }
+
+            if (x === 0) {
+
+                ctx.moveTo(x, y);
+
+            } else {
+
+                ctx.lineTo(x, y);
+
+            }
+
+        }
+
+        ctx.strokeStyle = color;
+
+        ctx.globalAlpha =
+
+            1 - layer * 0.28;
+
+        ctx.lineWidth = 2;
+
+        ctx.shadowColor = color;
+
+        ctx.shadowBlur = 10;
+
+        ctx.stroke();
+
+    }
+
+    ctx.globalAlpha = 1;
+
+    ctx.shadowBlur = 0;
+
+
+    // =====================================
+    // ROBOT MOUTH ANIMATION
+    // =====================================
+
+    if (state === "SPEAKING") {
+
+        const opening =
+
+            2 + energy * 20;
+
+        mouth.setAttribute(
+
+            "d",
+
+            `M140 146
+             Q160 ${146-opening} 180 146
+             Q160 ${146+opening} 140 146`
+
+        );
+
+    }
+
+
+    else if (state === "LISTENING") {
+
+        mouth.setAttribute(
+
+            "d",
+
+            "M145 151 Q160 145 175 151"
+
+        );
+
+    }
+
+
+    else if (state === "THINKING") {
+
+        mouth.setAttribute(
+
+            "d",
+
+            "M148 151 H172"
+
+        );
+
+    }
+
+
+    else {
+
+        mouth.setAttribute(
+
+            "d",
+
+            "M140 146 Q160 166 180 146"
+
+        );
+
+    }
+
+
+    // Facial expression
+
+    $("brows").setAttribute(
+
+        "opacity",
+
+        state === "THINKING"
+
+        || state === "LISTENING"
+
+        ? "0.8"
+
+        : "0"
+
+    );
+
+}
+
+
+requestAnimationFrame(animate);
+
+
+// =========================================
+// MICROPHONE PRIVACY
+// =========================================
+
+document.addEventListener(
+
+    "visibilitychange",
+
+    () => {
+
+        if (
+
+            document.hidden
+
+            && (active || starting)
+
+        ) {
+
+            stopVoice();
+
+        }
+
+    }
+
+);
+
+
+window.addEventListener(
+
+    "pagehide",
+
+    () => {
+
+        clearInterval(voiceTimer);
+
+        clearTimeout(replyTimer);
+
+        cancelHold();
+
+        stopVoice();
+
+        audioContext?.close().catch(
+
+            () => {}
+
+        );
+
+    }
+
+);
+
+
+// =========================================
+// INITIALIZE NOVA
+// =========================================
+
+setStatus("STANDBY");
+
+
+post(
+
+    "streamlit:componentReady",
+
+    {
+
+        apiVersion: 1
+
+    }
+
+);
+
+
+resizeFrame();
+
+
+if (window.ResizeObserver) {
+
+    new ResizeObserver(
+
+        resizeFrame
+
+    ).observe(
+
+        document.body
+
+    );
+
+}
+
+</script>
+
+</body>
+</html>
