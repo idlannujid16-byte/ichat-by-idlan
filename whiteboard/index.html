@@ -1,696 +1,1486 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ms">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NOVA V18 Simple AI Classroom</title>
+
+<title>NOVA V19 Study Buddy Visual Classroom</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  background:transparent;
-  color:#eaf6ff;
-  font:14px system-ui,Arial;
+* {
+    box-sizing: border-box;
 }
-main{
-  border:1px solid #35536e;
-  background:linear-gradient(145deg,#142437,#0b1422);
-  border-radius:22px;
-  padding:16px;
+
+body {
+    margin: 0;
+    background: transparent;
+    color: #eef6ff;
+    font: 14px system-ui, Arial;
 }
-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
+
+main {
+    background: linear-gradient(
+        135deg, #12283f, #0b1728
+    );
+    border: 1px solid #3c617c;
+    border-radius: 20px;
+    padding: 15px;
 }
-h2{font-size:20px;margin:0}
-.sub{color:#acc4d9;font-size:12px;margin-top:5px}
-#status{color:#86dcff;font-size:12px}
-.board{
-  min-height:255px;
-  margin:16px 0 12px;
-  padding:22px;
-  border-radius:16px;
-  color:#213d59;
-  background:#f5f8fd;
-  box-shadow:inset 0 0 14px #d5e0ee;
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
 }
-#stepTitle{
-  font-size:12px;
-  color:#4c7290;
-  font-weight:700;
+
+h2 {
+    margin: 0;
+    font-size: 19px;
 }
-#written{
-  font:600 clamp(20px,4.5vw,30px)/1.6
-       ui-monospace,Consolas,monospace;
-  min-height:140px;
-  margin-top:25px;
-  white-space:pre-wrap;
-  overflow-wrap:anywhere;
+
+small, .muted {
+    color: #9ebbd0;
+    font-size: 12px;
 }
-.progress{
-  height:6px;
-  border-radius:6px;
-  background:#d6e4f0;
-  overflow:hidden;
+
+#state {
+    color: #8de8ff;
+    font-size: 12px;
 }
-#fill{
-  background:#268cbd;
-  width:0;
-  height:100%;
+
+.board {
+    background: #f6f9fc;
+    border-radius: 17px;
+    padding: 14px;
+    margin: 13px 0;
+    color: #20384c;
+    box-shadow: inset 0 0 13px #ceddeb;
 }
-#narration{
-  background:#1b344a;
-  border:1px solid #355771;
-  border-radius:13px;
-  padding:14px;
-  min-height:75px;
-  line-height:1.7;
+
+#stepTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #57738c;
 }
-.controls{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin:13px 0;
+
+#visual {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 185px;
+    max-height: 310px;
+    margin: 8px auto;
 }
-button{
-  background:#29445c;
-  color:#e8f6ff;
-  border:1px solid #547c9e;
-  border-radius:12px;
-  padding:12px 17px;
-  font:600 13px system-ui;
-  cursor:pointer;
+
+#written {
+    min-height: 52px;
+    font: 600 clamp(16px,3.3vw,25px)/1.5
+        ui-monospace, Consolas, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding: 4px 2px 12px;
 }
-button.primary{
-  background:#146b93;
-  border-color:#70d4ff;
+
+.progress {
+    height: 5px;
+    background: #dce7f0;
+    border-radius: 6px;
+    overflow: hidden;
 }
-button.ask{
-  background:#633649;
-  border-color:#c27f9c;
+
+#fill {
+    width: 0;
+    height: 100%;
+    background: #1d9ecc;
 }
-button:disabled{opacity:.5}
-audio{width:100%;margin:8px 0}
-#askPanel{
-  background:#172d40;
-  border:1px solid #407493;
-  border-radius:15px;
-  padding:14px;
-  margin-top:13px;
+
+#speech {
+    line-height: 1.65;
+    padding: 14px;
+    background: #1c3b53;
+    border-radius: 12px;
+    border: 1px solid #396681;
+    min-height: 60px;
 }
-textarea{
-  width:100%;
-  min-height:80px;
-  padding:12px;
-  border-radius:10px;
-  background:#091724;
-  color:#fff;
-  border:1px solid #4b738b;
-  font:14px system-ui;
-  resize:vertical;
+
+.controls {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin: 12px 0;
 }
-#answer{
-  background:#25445b;
-  border-radius:10px;
-  padding:13px;
-  white-space:pre-wrap;
-  line-height:1.7;
-  margin:12px 0;
+
+button {
+    cursor: pointer;
+    border: 1px solid #5c89a8;
+    border-radius: 12px;
+    background: #264760;
+    color: white;
+    padding: 11px 15px;
+    font: 600 13px system-ui;
 }
-footer{
-  color:#98afc6;
-  font-size:11px;
-  margin-top:12px;
+
+button.primary {
+    background: #086a92;
+    border-color: #79d5ff;
 }
-[hidden]{display:none!important}
+
+button.ask {
+    background: #67394e;
+    border-color: #c28ba3;
+}
+
+button:disabled {
+    opacity: .5;
+}
+
+audio {
+    width: 100%;
+    height: 35px;
+    margin: 8px 0;
+}
+
+textarea {
+    width: 100%;
+    min-height: 75px;
+    padding: 11px;
+    background: #0d2134;
+    color: #fff;
+    border: 1px solid #517a92;
+    border-radius: 10px;
+    font: 14px system-ui;
+}
+
+#questionPanel {
+    padding: 13px;
+    border: 1px solid #47728e;
+    background: #183348;
+    border-radius: 13px;
+    margin-top: 13px;
+}
+
+#response {
+    white-space: pre-wrap;
+    line-height: 1.65;
+    padding: 12px;
+    background: #274960;
+    border-radius: 10px;
+    margin-top: 9px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.focus {
+    stroke: #fc9e39 !important;
+    stroke-width: 5 !important;
+    filter: drop-shadow(0 0 5px #f9c467);
+}
+
+@media(max-width:600px) {
+    main {padding:10px}
+    .board {padding:10px}
+    #visual {min-height:150px}
+}
 </style>
 </head>
 
 <body>
 <main>
+
 <header>
-  <div>
-    <h2>✎ NOVA AI Classroom</h2>
-    <div class="sub" id="heading">
-      Your personal AI teacher
+    <div>
+        <h2>✎ NOVA Visual Study Buddy</h2>
+        <div class="muted" id="heading">
+            Your AI teacher with pictures
+        </div>
     </div>
-  </div>
-  <span id="status">Ready</span>
+    <span id="state">Ready</span>
 </header>
 
-<section class="board">
-  <div id="stepTitle">Ready to learn</div>
-  <div id="written">
-    Pilih subjek dan tekan Start Learning.
-  </div>
-  <div class="progress">
-    <div id="fill"></div>
-  </div>
-</section>
+<div class="board">
 
-<div id="narration">
-  NOVA akan menerangkan pelajaran
-  sambil menulis langkah demi langkah.
+    <div id="stepTitle">
+        Ready to learn
+    </div>
+
+    <svg
+        id="visual"
+        viewBox="0 0 480 255"
+        role="img"
+        aria-label="Ilustrasi pembelajaran"
+    ></svg>
+
+    <div id="written">
+        Pilih topik dan tekan Start Learning.
+    </div>
+
+    <div class="progress">
+        <div id="fill"></div>
+    </div>
+
+</div>
+
+<div id="speech">
+    🤖 NOVA: Haa, jom kita belajar sama-sama!
 </div>
 
 <audio id="lessonAudio" controls hidden></audio>
 
 <div class="controls">
-  <button id="mainButton" class="primary">
-    ▶ Start Learning
-  </button>
-  <button id="askButton" class="ask">
-    ✋ Ask NOVA
-  </button>
+    <button class="primary" id="play">
+        ▶ Start Learning
+    </button>
+
+    <button class="ask" id="ask">
+        ✋ Ask NOVA
+    </button>
 </div>
 
-<section id="askPanel" hidden>
-  <div class="sub" id="micStatus">
-    Lesson paused. Tanya apa yang tidak faham.
-  </div>
+<div id="questionPanel" hidden>
 
-  <textarea
-    id="question"
-    placeholder="Kenapa langkah ini digunakan?"
-  ></textarea>
+    <div class="muted" id="questionStatus">
+        Penerangan dihentikan. Tanya NOVA apa-apa.
+    </div>
 
-  <div class="controls">
-    <button id="sendQuestion">Send Question</button>
-    <button id="recordVoice">🎙 Record Voice</button>
-    <button id="sendRecording" hidden>
-      ■ Send Recording
-    </button>
-  </div>
+    <textarea
+        id="question"
+        placeholder="Contoh: Kenapa bahagian ungu ni penting?"
+    ></textarea>
 
-  <div id="answer" hidden></div>
+    <div class="controls">
+        <button id="send">Send Question</button>
 
-  <audio id="answerAudio" controls hidden></audio>
+        <button id="record">
+            🎙 Record Voice
+        </button>
 
-  <div class="controls">
-    <button id="continueButton" class="primary">
-      ▶ Continue Lesson
-    </button>
-  </div>
-</section>
+        <button id="endRecord" hidden>
+            ■ Send Recording
+        </button>
+    </div>
 
-<footer>
-  NOVA V18 • Developed by Idlan
-  • Browser autoplay may require one tap
-</footer>
+    <div id="response" hidden></div>
+    <audio id="replyAudio" controls hidden></audio>
+
+    <div class="controls">
+        <button id="continue" class="primary">
+            ▶ Continue Lesson
+        </button>
+    </div>
+</div>
+
+<small>
+    Visual adalah ilustrasi skematik;
+    tulisan mengikuti kemajuan suara setiap
+    langkah. Audio automatik mungkin
+    memerlukan satu tap.
+</small>
+
 </main>
 
 <script>
-"use strict";
+'use strict';
 
-const $=id=>document.getElementById(id);
-const lessonAudio=$("lessonAudio");
-const answerAudio=$("answerAudio");
+const $ = id => document.getElementById(id);
 
-let plan=null;
-let planId="";
-let stepIndex=0;
-let asking=false;
-let waiting=false;
-let playing=false;
-let seenReply="";
-let lessonGeneration=0;
-let micStream=null;
-let recorder=null;
-let recordingTimer=null;
-let autoTimer=null;
+const audio = $('lessonAudio');
+const replyAudio = $('replyAudio');
 
-function host(type,extra={}){
-  parent.postMessage({
-    isStreamlitMessage:true,
-    type,...extra
-  },"*");
+let plan = null;
+let planId = '';
+let index = 0;
+
+let asking = false;
+let pending = false;
+let seenReply = '';
+
+let generation = 0;
+let autoTimer = null;
+
+let stream = null;
+let rec = null;
+let micTimer = null;
+
+
+// ==========================================
+// STREAMLIT COMMUNICATION
+// ==========================================
+
+function post(type, extra = {}) {
+    parent.postMessage({
+        isStreamlitMessage: true,
+        type,
+        ...extra
+    }, '*');
 }
 
-function resize(){
-  host("streamlit:setFrameHeight",{
-    height:document.body.scrollHeight+8
-  });
+function resize() {
+    post('streamlit:setFrameHeight', {
+        height: document.body.scrollHeight + 8
+    });
 }
 
-function setStatus(text){
-  $("status").textContent=text;
+function status(text) {
+    $('state').textContent = text;
 }
 
-function currentStep(){
-  return plan?.steps?.[stepIndex]||null;
-}
 
-function progress(value){
-  if(!currentStep())return;
+// ==========================================
+// VISUAL DRAWING ENGINE
+// ==========================================
 
-  const text=currentStep().write;
-  const p=Math.max(0,Math.min(1,value));
-  const count=Math.floor(text.length*p);
-
-  $("written").textContent=
-    text.slice(0,count)+(count<text.length?"▌":"");
-
-  $("fill").style.width=Math.round(p*100)+"%";
-}
-
-function loadStep(index){
-  if(!plan)return;
-
-  lessonGeneration++;
-  clearTimeout(autoTimer);
-
-  lessonAudio.pause();
-  lessonAudio.removeAttribute("src");
-  lessonAudio.load();
-  lessonAudio.hidden=true;
-
-  stepIndex=Math.max(
-    0,Math.min(plan.steps.length-1,index)
-  );
-
-  const s=currentStep();
-
-  $("stepTitle").textContent=
-    `LANGKAH ${stepIndex+1}/${plan.steps.length} • ${s.title}`;
-
-  $("narration").textContent="🤖 NOVA: "+s.say;
-
-  progress(0);
-  playing=false;
-  $("mainButton").textContent="▶ Play Lesson";
-  setStatus("Ready");
-  resize();
-}
-
-async function playLesson(){
-  if(!plan||asking||waiting)return;
-
-  const s=currentStep();
-
-  if(
-    lessonAudio.getAttribute("src") &&
-    lessonAudio.currentTime>0 &&
-    !lessonAudio.ended
-  ){
-    try{
-      await lessonAudio.play();
-      return;
-    }catch(e){}
-  }
-
-  if(!s.audio){
-    progress(1);
-    setStatus("Voice unavailable");
-    $("mainButton").textContent="▶ Next Step";
-    return;
-  }
-
-  lessonAudio.src="data:audio/mpeg;base64,"+s.audio;
-  lessonAudio.hidden=false;
-
-  try{
-    await lessonAudio.play();
-    playing=true;
-    setStatus("NOVA speaking");
-    $("mainButton").textContent="Ⅱ Pause";
-  }catch(e){
-    setStatus("Tap audio Play");
-    $("mainButton").textContent="▶ Play Voice";
-  }
-
-  resize();
-}
-
-$("mainButton").onclick=()=>{
-  if(!plan||asking)return;
-
-  if(!lessonAudio.paused){
-    lessonAudio.pause();
-    playing=false;
-    setStatus("Paused");
-    $("mainButton").textContent="▶ Continue";
-    return;
-  }
-
-  const complete=
-    lessonAudio.ended ||
-    (!lessonAudio.getAttribute("src") &&
-     $("fill").style.width==="100%");
-
-  if(complete){
-    loadStep(
-      stepIndex+1<plan.steps.length
-        ?stepIndex+1:0
-    );
-  }
-
-  playLesson();
-};
-
-lessonAudio.addEventListener("play",()=>{
-  playing=true;
-  setStatus("NOVA speaking");
-  $("mainButton").textContent="Ⅱ Pause";
-});
-
-lessonAudio.addEventListener("pause",()=>{
-  if(!lessonAudio.ended&&playing){
-    playing=false;
-    $("mainButton").textContent="▶ Continue";
-  }
-});
-
-lessonAudio.addEventListener("timeupdate",()=>{
-  if(
-    Number.isFinite(lessonAudio.duration) &&
-    lessonAudio.duration>0
-  ){
-    progress(
-      lessonAudio.currentTime/lessonAudio.duration
-    );
-  }
-});
-
-lessonAudio.addEventListener("ended",()=>{
-  playing=false;
-  progress(1);
-  setStatus("Step complete");
-
-  $("mainButton").textContent=
-    stepIndex===plan.steps.length-1
-      ?"↻ Repeat Lesson":"▶ Next Step";
-
-  const token=lessonGeneration;
-
-  if(!asking&&stepIndex<plan.steps.length-1){
-    autoTimer=setTimeout(()=>{
-      if(
-        token!==lessonGeneration||
-        asking||waiting
-      )return;
-
-      loadStep(stepIndex+1);
-      playLesson();
-    },600);
-  }
-});
+const svgHead = `
+<defs>
+    <filter id="shine">
+        <feGaussianBlur
+            stdDeviation="5"
+            result="blur"
+        />
+        <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+    </filter>
+</defs>
+`;
 
 
-// ===================================
-// INTERRUPT AND ASK
-// ===================================
+function renderVisual(type, focus) {
 
-$("askButton").onclick=()=>{
-  if(!plan)return;
+    const glow = name =>
+        focus === name
+            ? 'class="focus"'
+            : '';
 
-  lessonGeneration++;
-  clearTimeout(autoTimer);
-  lessonAudio.pause();
-  answerAudio.pause();
-
-  asking=true;
-
-  $("askPanel").hidden=false;
-  $("mainButton").disabled=true;
-  $("askButton").disabled=true;
-
-  setStatus("Paused — ask NOVA");
-  resize();
-};
-
-function sendQuestion(payload){
-  if(waiting)return;
-
-  waiting=true;
-
-  $("sendQuestion").disabled=true;
-  $("recordVoice").disabled=true;
-  $("micStatus").textContent=
-    "NOVA sedang menjawab...";
-
-  const id=
-    crypto.randomUUID?.()||
-    Date.now()+"-"+Math.random();
-
-  host("streamlit:setComponentValue",{
-    value:{
-      type:"question",
-      id,
-      plan_id:planId,
-      step:stepIndex,
-      ...payload
-    },
-    dataType:"json"
-  });
-}
-
-$("sendQuestion").onclick=()=>{
-  const text=$("question").value.trim();
-  if(text)sendQuestion({text});
-};
+    let art = '';
 
 
-// ===================================
-// MICROPHONE INTERRUPTION
-// ===================================
+    // ======================================
+    // BIOLOGY — ANIMAL CELL
+    // ======================================
 
-function stopMic(){
-  clearTimeout(recordingTimer);
-  recordingTimer=null;
+    if (type === 'cell') {
 
-  micStream?.getTracks().forEach(t=>t.stop());
-  micStream=null;
-  recorder=null;
+        art = `
+        <ellipse
+            cx="230" cy="124"
+            rx="174" ry="107"
+            fill="#cbeee3"
+            stroke="#498f79"
+            stroke-width="4"
+            ${glow('membrane')}
+        />
 
-  $("recordVoice").hidden=false;
-  $("sendRecording").hidden=true;
-}
+        <ellipse
+            cx="230" cy="124"
+            rx="161" ry="95"
+            fill="#b1dfd4"
+            stroke="none"
+            ${glow('cytoplasm')}
+        />
 
-$("recordVoice").onclick=async()=>{
-  if(waiting)return;
+        <g ${glow('nucleus')}>
+            <ellipse
+                cx="207" cy="117"
+                rx="54" ry="45"
+                fill="#ae93dc"
+                stroke="#6a56a1"
+                stroke-width="3"
+            />
+            <circle
+                cx="198" cy="114"
+                r="15"
+                fill="#7050a3"
+            />
+        </g>
 
-  try{
-    micStream=
-      await navigator.mediaDevices.getUserMedia({
-        audio:{
-          echoCancellation:true,
-          noiseSuppression:true
+        <g
+            ${glow('mitochondria')}
+            fill="#e9a465"
+            stroke="#ac6b35"
+            stroke-width="3"
+        >
+            <ellipse
+                cx="117" cy="99"
+                rx="28" ry="14"
+                transform="rotate(-22 117 99)"
+            />
+            <ellipse
+                cx="333" cy="98"
+                rx="28" ry="14"
+                transform="rotate(18 333 98)"
+            />
+            <ellipse
+                cx="284" cy="178"
+                rx="28" ry="14"
+                transform="rotate(-23 284 178)"
+            />
+        </g>
+
+        <g
+            stroke="#955c32"
+            fill="none"
+            stroke-width="2"
+        >
+            <path d="M100 97q12-17 28 0"/>
+            <path d="M316 98q17-18 35 0"/>
+            <path d="M268 178q17-16 35 0"/>
+        </g>
+
+        <g fill="#398c8c">
+            <circle cx="95" cy="160" r="5"/>
+            <circle cx="354" cy="143" r="5"/>
+            <circle cx="270" cy="51" r="5"/>
+            <circle cx="153" cy="193" r="5"/>
+        </g>
+
+        <g stroke="#668699" stroke-width="1.5">
+            <path d="M246 88L335 34"/>
+            <path d="M345 93L401 73"/>
+            <path d="M98 188L46 217"/>
+        </g>
+
+        <g font-size="13" fill="#334d66">
+            <text x="337" y="31">Nukleus</text>
+            <text x="390" y="67">Mitokondrion</text>
+            <text x="12" y="235">Membran</text>
+        </g>
+        `;
+
+    }
+
+
+    // ======================================
+    // PHYSICS — ELECTRICAL CIRCUIT
+    // ======================================
+
+    else if (type === 'circuit') {
+
+        art = `
+        <path
+            d="M106 60H366V190H106Z"
+            stroke="#467e9c"
+            stroke-width="6"
+            fill="none"
+            ${glow('current')}
+        />
+
+        <g ${glow('battery')}>
+            <rect
+                x="92" y="110"
+                width="30" height="42"
+                fill="#f8fbff"
+            />
+            <path
+                d="M87 112H128M94 126H121"
+                stroke="#c65d4c"
+                stroke-width="5"
+            />
+        </g>
+
+        <g ${glow('resistor')}>
+            <rect
+                x="216" y="49"
+                width="68" height="23"
+                fill="#eab979"
+                stroke="#b77a3a"
+                stroke-width="3"
+            />
+        </g>
+
+        <g font-size="15" fill="#263c52">
+            <text x="244" y="46" text-anchor="middle">
+                4 Ω
+            </text>
+            <text x="73" y="101">+</text>
+            <text x="73" y="153">−</text>
+            <text x="230" y="215">I = V / R</text>
+        </g>
+
+        <g ${glow('voltage')}>
+            <circle
+                cx="365" cy="124"
+                r="25"
+                fill="#f4fbff"
+                stroke="#427e9d"
+                stroke-width="3"
+            />
+            <text
+                x="365" y="130"
+                font-size="17"
+                fill="#225575"
+                text-anchor="middle"
+            >V</text>
+        </g>
+        `;
+
+    }
+
+
+    // ======================================
+    // CHEMISTRY — ATOM
+    // ======================================
+
+    else if (type === 'atom') {
+
+        art = `
+        <g
+            ${glow('shells')}
+            stroke="#669bc5"
+            stroke-width="2"
+            fill="none"
+        >
+            <ellipse
+                cx="240" cy="123"
+                rx="120" ry="64"
+            />
+            <ellipse
+                cx="240" cy="123"
+                rx="78" ry="43"
+            />
+        </g>
+
+        <g ${glow('nucleus')}>
+            <circle
+                cx="240" cy="123"
+                r="31"
+                fill="#ed9892"
+                stroke="#be666b"
+                stroke-width="4"
+            />
+            <text
+                x="240" y="129"
+                font-size="17"
+                fill="#572d3c"
+                text-anchor="middle"
+            >p+</text>
+        </g>
+
+        <g
+            ${glow('electrons')}
+            fill="#5fa9e3"
+            stroke="#326fa8"
+            stroke-width="2"
+        >
+            <circle cx="120" cy="123" r="9"/>
+            <circle cx="318" cy="123" r="9"/>
+            <circle cx="240" cy="80" r="9"/>
+            <circle cx="240" cy="187" r="9"/>
+        </g>
+
+        <text
+            x="240" y="240"
+            font-size="13"
+            fill="#49677f"
+            text-anchor="middle"
+        >
+            Model Bohr ringkas
+        </text>
+        `;
+
+    }
+
+
+    // ======================================
+    // HISTORY — TIMELINE
+    // ======================================
+
+    else if (type === 'timeline') {
+
+        art = `
+        <path
+            d="M65 123H410"
+            stroke="#678ea7"
+            stroke-width="6"
+        />
+
+        <g ${glow('1957')}>
+            <circle
+                cx="150" cy="123"
+                r="19"
+                fill="#4ba6c4"
+                stroke="#397b9f"
+                stroke-width="3"
+            />
+            <text
+                x="150" y="84"
+                font-size="23"
+                fill="#253e55"
+                text-anchor="middle"
+            >1957</text>
+            <text
+                x="150" y="168"
+                font-size="15"
+                fill="#415870"
+                text-anchor="middle"
+            >Merdeka</text>
+        </g>
+
+        <g ${glow('1963')}>
+            <circle
+                cx="335" cy="123"
+                r="19"
+                fill="#4ba6c4"
+                stroke="#397b9f"
+                stroke-width="3"
+            />
+            <text
+                x="335" y="84"
+                font-size="23"
+                fill="#253e55"
+                text-anchor="middle"
+            >1963</text>
+            <text
+                x="335" y="168"
+                font-size="15"
+                fill="#415870"
+                text-anchor="middle"
+            >Malaysia</text>
+        </g>
+        `;
+
+    }
+
+
+    // ======================================
+    // ADD MATH — QUADRATIC
+    // ======================================
+
+    else if (type === 'quadratic') {
+
+        art = `
+        <g stroke="#d1dee7">
+            <path
+                d="M30 120H455M240 20V238"
+                stroke="#738ba2"
+                stroke-width="2"
+            />
+        </g>
+
+        <path
+            d="M144 27Q240 255 336 27"
+            fill="none"
+            stroke="#2589ae"
+            stroke-width="5"
+            ${glow('graph')}
+        />
+
+        <g font-size="17" fill="#2c4a63">
+            <text
+                x="20" y="38"
+                ${glow('equation')}
+            >x²−5x+6=0</text>
+
+            <text
+                x="294" y="199"
+                ${glow('factors')}
+            >(x−2)(x−3)</text>
+
+            <text
+                x="170" y="242"
+                ${glow('roots')}
+            >x=2 atau 3</text>
+        </g>
+        `;
+
+    }
+
+
+    // ======================================
+    // MATHEMATICS — FRACTION
+    // ======================================
+
+    else if (type === 'fraction') {
+
+        art = `
+        <text
+            x="240" y="66"
+            font-size="39"
+            font-weight="700"
+            fill="#2b6488"
+            text-anchor="middle"
+            ${glow('numerator')}
+        >3 / 8</text>
+        `;
+
+        for (let i = 0; i < 8; i++) {
+
+            art += `
+            <rect
+                x="${48 + i * 48}"
+                y="106"
+                width="44"
+                height="76"
+                rx="5"
+                fill="${i < 3 ? '#61b4db' : '#d1e0ea'}"
+                stroke="#558aa6"
+                stroke-width="2"
+                ${glow(i < 3 ? 'shaded' : 'denominator')}
+            />
+            `;
+
         }
-      });
 
-    const formats=[
-      "audio/webm;codecs=opus",
-      "audio/mp4",
-      "audio/webm",
-      "audio/ogg"
-    ];
+        art += `
+        <text
+            x="240" y="222"
+            font-size="15"
+            fill="#526e81"
+            text-anchor="middle"
+        >
+            3 daripada 8 bahagian yang sama besar
+        </text>
+        `;
 
-    const mime=formats.find(t=>
-      MediaRecorder.isTypeSupported(t)
+    }
+
+
+    // ======================================
+    // FALLBACK
+    // ======================================
+
+    else {
+
+        art = `
+        <text
+            x="240" y="126"
+            font-size="23"
+            fill="#39627e"
+            text-anchor="middle"
+        >
+            Belajar bersama NOVA ✦
+        </text>
+        `;
+
+    }
+
+    $('visual').innerHTML = svgHead + art;
+
+    $('visual').setAttribute(
+        'aria-label',
+        'Rajah ' + type + ', fokus ' + focus
     );
 
-    const chunks=[];
+}
 
-    const rec=new MediaRecorder(
-      micStream,mime?{mimeType:mime}:{}
+
+// ==========================================
+// LESSON STEPS
+// ==========================================
+
+function current() {
+    return plan?.steps?.[index] || null;
+}
+
+
+function writeProgress(p) {
+
+    const step = current();
+
+    if (!step) return;
+
+    const ratio = Math.max(
+        0,
+        Math.min(1, p)
     );
-    recorder=rec;
 
-    rec.ondataavailable=e=>{
-      if(e.data.size)chunks.push(e.data);
-    };
+    const count = Math.floor(
+        step.write.length * ratio
+    );
 
-    rec.onstop=async()=>{
-      const actual=
-        rec.mimeType||chunks[0]?.type||
-        "audio/webm";
-
-      const blob=new Blob(chunks,{type:actual});
-      stopMic();
-
-      if(!blob.size)return;
-
-      try{
-        const b64=await new Promise(
-          (resolve,reject)=>{
-            const reader=new FileReader();
-
-            reader.onload=()=>resolve(
-              String(reader.result).split(",")[1]
-            );
-
-            reader.onerror=reject;
-            reader.readAsDataURL(blob);
-          }
+    $('written').textContent =
+        step.write.slice(0, count)
+        + (
+            count < step.write.length
+                ? '▌'
+                : ''
         );
 
-        sendQuestion({
-          audio:b64,
-          mime:actual
-        });
-      }catch(e){
-        $("micStatus").textContent=
-          "Rakaman gagal. Cuba taip soalan.";
-      }
-    };
+    $('fill').style.width =
+        Math.round(ratio * 100) + '%';
 
-    rec.start();
-
-    $("recordVoice").hidden=true;
-    $("sendRecording").hidden=false;
-    $("micStatus").textContent=
-      "Recording... Tekan Send Recording.";
-
-    recordingTimer=setTimeout(()=>{
-      if(rec.state==="recording")rec.stop();
-    },18000);
-
-  }catch(e){
-    stopMic();
-    $("micStatus").textContent=
-      "Mikrofon tidak tersedia. Taip soalan.";
-  }
-};
-
-$("sendRecording").onclick=()=>{
-  if(recorder?.state==="recording"){
-    recorder.stop();
-  }
-};
+}
 
 
-// ===================================
-// CONTINUE LESSON
-// ===================================
+function loadStep(n) {
 
-$("continueButton").onclick=()=>{
-  if(recorder?.state==="recording"){
-    recorder.onstop=null;
-    recorder.stop();
-  }
+    if (!plan) return;
 
-  stopMic();
-  answerAudio.pause();
+    generation++;
 
-  asking=false;
-  waiting=false;
+    clearTimeout(autoTimer);
 
-  $("askPanel").hidden=true;
-  $("mainButton").disabled=false;
-  $("askButton").disabled=false;
-  $("sendQuestion").disabled=false;
-  $("recordVoice").disabled=false;
+    audio.pause();
 
-  $("answer").hidden=true;
-  answerAudio.hidden=true;
-  answerAudio.removeAttribute("src");
+    audio.removeAttribute('src');
+    audio.load();
+    audio.hidden = true;
 
-  setStatus("Continuing");
-  playLesson();
-  resize();
-};
+    index = Math.max(
+        0,
+        Math.min(
+            plan.steps.length - 1,
+            n
+        )
+    );
+
+    const step = current();
+
+    $('stepTitle').textContent =
+        `LANGKAH ${index + 1}/${plan.steps.length}`
+        + ` • ${step.title}`;
+
+    $('speech').textContent =
+        '🤖 NOVA: ' + step.say;
+
+    renderVisual(
+        plan.visual || 'cell',
+        step.focus || 'whole'
+    );
+
+    writeProgress(0);
+
+    $('play').textContent =
+        '▶ Play Lesson';
+
+    status('Ready');
+
+    resize();
+
+}
 
 
-// ===================================
-// RECEIVE STREAMLIT DATA
-// ===================================
+// ==========================================
+// PLAY LESSON WITH VOICE
+// ==========================================
 
-window.addEventListener("message",e=>{
-  if(
-    e.source!==parent||
-    e.data?.type!=="streamlit:render"
-  )return;
+async function play() {
 
-  const a=e.data.args||{};
+    if (!plan || asking || pending) {
+        return;
+    }
 
-  if(a.plan_id&&a.plan_id!==planId){
-    planId=a.plan_id;
-    plan=a.plan;
-    asking=false;
-    waiting=false;
-    seenReply="";
+    const step = current();
 
-    $("heading").textContent=
-      `${plan.subject} • ${plan.topic}`;
+    if (
+        audio.getAttribute('src')
+        && audio.currentTime > 0
+        && !audio.ended
+    ) {
 
-    $("askPanel").hidden=true;
-    $("mainButton").disabled=false;
-    $("askButton").disabled=false;
+        try {
+            await audio.play();
+            return;
+        } catch (error) {}
 
-    loadStep(0);
+    }
 
-    // Attempt autoplay on new lesson.
-    // A browser may require a manual Play tap.
-    playLesson();
-  }
+    if (!step.audio) {
 
-  if(
-    a.reply?.id &&
-    a.reply.id!==seenReply &&
-    a.plan_id===planId
-  ){
-    seenReply=a.reply.id;
-    waiting=false;
+        writeProgress(1);
 
-    $("sendQuestion").disabled=false;
-    $("recordVoice").disabled=false;
-    $("answer").hidden=false;
-    $("answer").textContent=a.reply.text||"";
+        status('No audio — text ready');
 
-    $("micStatus").textContent=
-      "NOVA sudah menjawab. Tekan Continue Lesson.";
+        $('play').textContent =
+            '▶ Next Step';
 
-    $("question").value="";
+        return;
 
-    if(a.reply.audio){
-      answerAudio.src=
-        "data:audio/mpeg;base64,"+a.reply.audio;
-      answerAudio.hidden=false;
-      answerAudio.play().catch(()=>{});
+    }
+
+    audio.src =
+        'data:audio/mpeg;base64,'
+        + step.audio;
+
+    audio.hidden = false;
+
+    try {
+
+        await audio.play();
+
+    } catch (error) {
+
+        status('Tap audio Play below');
+
+        $('play').textContent =
+            '▶ Play Voice';
+
     }
 
     resize();
-  }
 
-  resize();
-});
+}
 
 
-// ===================================
-// CLEANUP
-// ===================================
+// ==========================================
+// PLAY / PAUSE
+// ==========================================
 
-document.addEventListener("visibilitychange",()=>{
-  if(document.hidden){
-    lessonAudio.pause();
-    answerAudio.pause();
+$('play').onclick = () => {
 
-    if(recorder?.state==="recording"){
-      recorder.onstop=null;
-      recorder.stop();
+    if (!plan || asking) return;
+
+    if (!audio.paused) {
+
+        audio.pause();
+
+        status('Paused');
+
+        $('play').textContent =
+            '▶ Continue';
+
+        return;
+
     }
-    stopMic();
-  }
+
+    if (
+        audio.ended
+        || (
+            !audio.getAttribute('src')
+            && $('fill').style.width === '100%'
+        )
+    ) {
+
+        loadStep(
+            index + 1 < plan.steps.length
+                ? index + 1
+                : 0
+        );
+
+    }
+
+    play();
+
+};
+
+
+audio.addEventListener('play', () => {
+
+    status('NOVA speaking');
+
+    $('play').textContent =
+        'Ⅱ Pause';
+
 });
 
-window.addEventListener("pagehide",()=>{
-  clearTimeout(autoTimer);
-  lessonAudio.pause();
-  answerAudio.pause();
-  stopMic();
+
+audio.addEventListener('pause', () => {
+
+    if (
+        !audio.ended
+        && audio.getAttribute('src')
+    ) {
+
+        $('play').textContent =
+            '▶ Continue';
+
+    }
+
 });
 
-host("streamlit:componentReady",{apiVersion:1});
+
+audio.addEventListener('timeupdate', () => {
+
+    if (
+        Number.isFinite(audio.duration)
+        && audio.duration > 0
+    ) {
+
+        writeProgress(
+            audio.currentTime / audio.duration
+        );
+
+    }
+
+});
+
+
+audio.addEventListener('ended', () => {
+
+    writeProgress(1);
+
+    status('Step complete');
+
+    $('play').textContent =
+        index === plan.steps.length - 1
+            ? '↻ Repeat Lesson'
+            : '▶ Next Step';
+
+    const token = generation;
+
+    if (
+        !asking
+        && !pending
+        && index < plan.steps.length - 1
+    ) {
+
+        autoTimer = setTimeout(() => {
+
+            if (
+                token !== generation
+                || asking
+                || pending
+            ) {
+                return;
+            }
+
+            loadStep(index + 1);
+
+            play();
+
+        }, 650);
+
+    }
+
+});
+
+
+// ==========================================
+// ASK NOVA
+// ==========================================
+
+function cleanupMic() {
+
+    clearTimeout(micTimer);
+    micTimer = null;
+
+    stream?.getTracks().forEach(
+        track => track.stop()
+    );
+
+    stream = null;
+    rec = null;
+
+    $('record').hidden = false;
+    $('endRecord').hidden = true;
+
+}
+
+
+$('ask').onclick = () => {
+
+    if (!plan) return;
+
+    generation++;
+
+    clearTimeout(autoTimer);
+
+    audio.pause();
+    replyAudio.pause();
+
+    asking = true;
+
+    $('questionPanel').hidden = false;
+    $('play').disabled = true;
+    $('ask').disabled = true;
+
+    status('Paused — ask NOVA');
+
+    resize();
+
+};
+
+
+// ==========================================
+// SEND STUDENT QUESTION
+// ==========================================
+
+function submit(payload) {
+
+    if (pending) return;
+
+    pending = true;
+
+    $('send').disabled = true;
+    $('record').disabled = true;
+
+    $('questionStatus').textContent =
+        'NOVA sedang menjawab...';
+
+    post('streamlit:setComponentValue', {
+
+        value: {
+            type: 'question',
+
+            id: (
+                crypto.randomUUID?.()
+                || String(
+                    Date.now() + Math.random()
+                )
+            ),
+
+            plan_id: planId,
+
+            step: index,
+
+            ...payload
+        },
+
+        dataType: 'json'
+
+    });
+
+}
+
+
+$('send').onclick = () => {
+
+    const question =
+        $('question').value.trim();
+
+    if (question) {
+        submit({text: question});
+    }
+
+};
+
+
+// ==========================================
+// RECORD STUDENT QUESTION
+// ==========================================
+
+$('record').onclick = async () => {
+
+    if (pending) return;
+
+    try {
+
+        stream =
+            await navigator.mediaDevices
+                .getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+
+        const formats = [
+            'audio/webm;codecs=opus',
+            'audio/mp4',
+            'audio/webm',
+            'audio/ogg'
+        ];
+
+        const format = formats.find(
+            value =>
+                MediaRecorder.isTypeSupported(value)
+        );
+
+        const chunks = [];
+
+        const recorder = new MediaRecorder(
+            stream,
+            format
+                ? {mimeType: format}
+                : {}
+        );
+
+        rec = recorder;
+
+        recorder.ondataavailable = event => {
+
+            if (event.data.size) {
+                chunks.push(event.data);
+            }
+
+        };
+
+        recorder.onstop = async () => {
+
+            const mime =
+                recorder.mimeType
+                || chunks[0]?.type
+                || 'audio/webm';
+
+            const blob = new Blob(
+                chunks,
+                {type: mime}
+            );
+
+            cleanupMic();
+
+            if (!blob.size) return;
+
+            try {
+
+                const data = await new Promise(
+                    (resolve, reject) => {
+
+                        const reader =
+                            new FileReader();
+
+                        reader.onload = () =>
+                            resolve(
+                                String(reader.result)
+                                    .split(',')[1]
+                            );
+
+                        reader.onerror = reject;
+
+                        reader.readAsDataURL(blob);
+
+                    }
+                );
+
+                submit({
+                    audio: data,
+                    mime
+                });
+
+            } catch (error) {
+
+                $('questionStatus').textContent =
+                    'Rakaman gagal. Taip soalan.';
+
+            }
+
+        };
+
+        recorder.start();
+
+        $('record').hidden = true;
+        $('endRecord').hidden = false;
+
+        $('questionStatus').textContent =
+            'Recording... tekan Send Recording.';
+
+        micTimer = setTimeout(() => {
+
+            if (
+                recorder.state === 'recording'
+            ) {
+                recorder.stop();
+            }
+
+        }, 18000);
+
+    } catch (error) {
+
+        cleanupMic();
+
+        $('questionStatus').textContent =
+            'Mikrofon tidak tersedia; taip soalan.';
+
+    }
+
+};
+
+
+$('endRecord').onclick = () => {
+
+    if (
+        rec?.state === 'recording'
+    ) {
+        rec.stop();
+    }
+
+};
+
+
+// ==========================================
+// CONTINUE LESSON
+// ==========================================
+
+$('continue').onclick = () => {
+
+    if (
+        rec?.state === 'recording'
+    ) {
+
+        rec.onstop = null;
+        rec.stop();
+
+    }
+
+    cleanupMic();
+
+    replyAudio.pause();
+
+    asking = false;
+    pending = false;
+
+    $('questionPanel').hidden = true;
+
+    $('play').disabled = false;
+    $('ask').disabled = false;
+
+    $('send').disabled = false;
+    $('record').disabled = false;
+
+    $('response').hidden = true;
+
+    replyAudio.hidden = true;
+    replyAudio.removeAttribute('src');
+
+    status('Continuing');
+
+    play();
+
+    resize();
+
+};
+
+
+// ==========================================
+// RECEIVE STREAMLIT LESSON DATA
+// ==========================================
+
+window.addEventListener('message', event => {
+
+    if (
+        event.source !== parent
+        || event.data?.type !== 'streamlit:render'
+    ) {
+        return;
+    }
+
+    const args = event.data.args || {};
+
+
+    // New lesson
+
+    if (
+        args.plan_id
+        && args.plan_id !== planId
+    ) {
+
+        plan = args.plan;
+        planId = args.plan_id;
+
+        asking = false;
+        pending = false;
+        seenReply = '';
+
+        $('heading').textContent =
+            `${plan.subject} • ${plan.topic}`;
+
+        $('questionPanel').hidden = true;
+
+        $('play').disabled = false;
+        $('ask').disabled = false;
+
+        loadStep(0);
+
+        // Browser may require a manual tap
+        // before autoplay is permitted.
+        play();
+
+    }
+
+
+    // NOVA answers the interruption
+
+    if (
+        args.reply?.id
+        && args.reply.id !== seenReply
+        && args.plan_id === planId
+    ) {
+
+        seenReply = args.reply.id;
+        pending = false;
+
+        $('send').disabled = false;
+        $('record').disabled = false;
+
+        $('response').hidden = false;
+
+        $('response').textContent =
+            args.reply.text || '';
+
+        $('questionStatus').textContent =
+            'NOVA dah jawab. Tekan Continue Lesson '
+            + 'bila bersedia.';
+
+        $('question').value = '';
+
+        if (args.reply.audio) {
+
+            replyAudio.src =
+                'data:audio/mpeg;base64,'
+                + args.reply.audio;
+
+            replyAudio.hidden = false;
+
+            replyAudio.play().catch(
+                () => {}
+            );
+
+        }
+
+        resize();
+
+    }
+
+    resize();
+
+});
+
+
+// ==========================================
+// PRIVACY AND CLEANUP
+// ==========================================
+
+function stopAll() {
+
+    clearTimeout(autoTimer);
+
+    audio.pause();
+    replyAudio.pause();
+
+    if (
+        rec?.state === 'recording'
+    ) {
+
+        rec.onstop = null;
+        rec.stop();
+
+    }
+
+    cleanupMic();
+
+}
+
+
+document.addEventListener(
+    'visibilitychange',
+    () => {
+
+        if (document.hidden) {
+            stopAll();
+        }
+
+    }
+);
+
+
+window.addEventListener(
+    'pagehide',
+    stopAll
+);
+
+
+// ==========================================
+// INITIALIZE
+// ==========================================
+
+post(
+    'streamlit:componentReady',
+    {apiVersion: 1}
+);
+
 resize();
 
-if(window.ResizeObserver){
-  new ResizeObserver(resize).observe(
-    document.body
-  );
+if (window.ResizeObserver) {
+
+    new ResizeObserver(resize).observe(
+        document.body
+    );
+
 }
 </script>
 </body>
