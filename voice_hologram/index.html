@@ -1,20 +1,19 @@
 
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ms">
+
 <head>
 
-<meta charset="UTF-8">
+<meta charset="utf-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+>
 
-<title>NOVA V11 Voice Assistant</title>
+<title>NOVA Live Whiteboard</title>
 
 <style>
-
-/* =========================================
-   NOVA PREMIUM DESIGN
-========================================= */
 
 * {
     box-sizing: border-box;
@@ -22,759 +21,368 @@ content="width=device-width, initial-scale=1.0">
 
 body {
     margin: 0;
-    padding: 0;
-
-    font-family: Arial, sans-serif;
-
+    font: 14px system-ui, Arial, sans-serif;
     background: transparent;
-    color: #e5f3ff;
-
-    --accent: #67e4ff;
+    color: #e9f6ff;
 }
 
-.container {
+main {
+    padding: 15px;
+    border: 1px solid #31536a;
+    border-radius: 20px;
 
-    position: relative;
-
-    overflow: hidden;
-
-    text-align: center;
-
-    padding: 25px 15px;
-
-    border-radius: 25px;
-
-    border: 1px solid #29465e;
-
-    background:
-        radial-gradient(
-            ellipse at 50% 35%,
-            #173b59,
-            #070f1c 75%
-        );
-
+    background: linear-gradient(
+        145deg,
+        #111d2e,
+        #0b1421
+    );
 }
 
-.brand {
-
-    font-size: 30px;
-
-    font-weight: bold;
-
-    letter-spacing: 9px;
-
-    color: #e2f6ff;
-
-    text-shadow:
-        0 0 20px #47bfff55;
-
+.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-.subtitle {
-
-    font-size: 10px;
-
-    letter-spacing: 3px;
-
-    color: #8faec8;
-
-    margin-top: 8px;
-
+strong {
+    font-size: 18px;
 }
 
-
-/* =========================================
-   ROBOT ANIMATION
-========================================= */
-
-#robot {
-
-    display: block;
-
-    width: 320px;
-
-    max-width: 100%;
-
-    margin: 15px auto 0;
-
-    cursor: pointer;
-
-    touch-action: none;
-
-    user-select: none;
-
-    -webkit-user-select: none;
-
-    -webkit-touch-callout: none;
-
-}
-
-.head {
-
-    animation:
-        floating 4s ease-in-out infinite;
-
-}
-
-.eyes {
-
-    transform-box: fill-box;
-
-    transform-origin: center;
-
-    animation:
-        blinking 5s infinite;
-
-}
-
-@keyframes floating {
-
-    0%,100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
-
-}
-
-@keyframes blinking {
-
-    0%,45%,50%,100% {
-        transform: scaleY(1);
-    }
-
-    47% {
-        transform: scaleY(0.07);
-    }
-
-}
-
-
-/* =========================================
-   AUDIO WAVE
-========================================= */
-
-#wave {
-
-    display: block;
-
-    width: 100%;
-
-    max-width: 480px;
-
-    height: 90px;
-
-    margin: -5px auto 5px;
-
-}
-
-
-/* =========================================
-   STATUS
-========================================= */
-
-#status {
-
-    color: var(--accent);
-
-    font-size: 13px;
-
-    font-weight: bold;
-
-    letter-spacing: 4px;
-
-    text-shadow:
-        0 0 12px var(--accent);
-
-}
-
-#hint {
-
-    min-height: 35px;
-
-    margin: 12px 0;
-
-    color: #a7bfd3;
-
+.hint {
+    color: #a0bdd1;
     font-size: 12px;
-
-    line-height: 1.7;
-
 }
 
+.board {
+    position: relative;
+    min-height: 270px;
+    padding: 22px 20px;
 
-/* =========================================
-   LONG PRESS PROGRESS
-========================================= */
-
-.progress {
-
-    width: 120px;
-
-    height: 3px;
-
-    background: #203950;
-
-    border-radius: 10px;
-
-    margin: 13px auto;
-
-    overflow: hidden;
-
-}
-
-#progressFill {
-
-    background: var(--accent);
-
-    height: 100%;
-
-    width: 0%;
-
-}
-
-
-/* =========================================
-   BUTTONS
-========================================= */
-
-button {
-
-    border: 1px solid #447ba1;
-
-    border-radius: 25px;
-
-    background: #163149;
-
-    color: #daf5ff;
-
-    padding: 12px 24px;
-
-    font-size: 13px;
-
-    cursor: pointer;
-
-    transition: .2s ease;
-
-}
-
-button:hover {
-
-    background: #224b68;
+    background: #f6f7fa;
+    border-radius: 14px;
+    margin: 13px 0;
+    color: #21344c;
 
     box-shadow:
-        0 0 18px #38bfff33;
+        inset 0 0 15px #c7d2df;
+}
 
+#stepTitle {
+    font-weight: 700;
+    font-size: 13px;
+    color: #426380;
+}
+
+#written {
+    font:
+        600 clamp(19px, 4.4vw, 29px)/1.6
+        ui-monospace, Consolas, monospace;
+
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+
+    margin-top: 26px;
+    min-height: 90px;
+}
+
+#diagram {
+    height: 94px;
+    width: 100%;
+    display: block;
+    margin-top: 4px;
+}
+
+#narration {
+    padding: 12px;
+
+    background: #182f43;
+    border: 1px solid #31506c;
+    border-radius: 12px;
+
+    line-height: 1.6;
+    min-height: 64px;
+}
+
+.controls {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 12px;
+}
+
+button {
+    padding: 10px 12px;
+    border: 1px solid #496d85;
+    border-radius: 12px;
+    background: #263e55;
+    color: #e9f6ff;
+    cursor: pointer;
 }
 
 button:disabled {
-
-    opacity: .5;
-
+    opacity: .4;
     cursor: default;
-
 }
 
-#endButton {
+.primary {
+    background: #1d6586;
+    border-color: #5dbde8;
+}
 
-    background: #3b2232;
+.danger {
+    background: #66364a;
+    border-color: #c08297;
+}
 
-    border-color: #986078;
+#player {
+    width: 100%;
+    height: 35px;
+    margin-top: 11px;
+}
 
-    color: #ffc2d0;
+#interruptPanel {
+    background: #142b3b;
+    padding: 12px;
+    border-radius: 12px;
+    margin-top: 12px;
+    border: 1px solid #3d7696;
+}
 
+textarea {
+    width: 100%;
+    min-height: 58px;
+    border-radius: 9px;
+    padding: 10px;
+
+    border: 1px solid #57738d;
+    background: #091725;
+    color: white;
+
+    font: inherit;
+    resize: vertical;
+}
+
+#reply {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    padding: 12px;
+
+    background: #224054;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+#status {
+    font-size: 12px;
+    color: #81d9ff;
+}
+
+#bar {
+    height: 4px;
+    border-radius: 10px;
+    background: #344b5e;
+    margin: 12px 0;
+}
+
+#fill {
+    height: 100%;
+    width: 0;
+    background: #6ae3ff;
+    border-radius: 10px;
 }
 
 [hidden] {
-
     display: none !important;
-
-}
-
-
-/* =========================================
-   AUDIO PLAYER
-========================================= */
-
-audio {
-
-    width: 95%;
-
-    max-width: 390px;
-
-    margin-top: 15px;
-
-    height: 40px;
-
-}
-
-#micStatus {
-
-    color: #9cb6ce;
-
-    font-size: 11px;
-
-    margin-top: 16px;
-
-}
-
-.footer {
-
-    color: #6f8ba4;
-
-    font-size: 10px;
-
-    letter-spacing: 2px;
-
-    margin-top: 20px;
-
-}
-
-@media(max-width: 500px) {
-
-    .container {
-
-        padding: 20px 10px;
-
-    }
-
-    #robot {
-
-        width: 280px;
-
-    }
-
-    .brand {
-
-        font-size: 25px;
-
-    }
-
-    #wave {
-
-        height: 75px;
-
-    }
-
-}
-
-@media(prefers-reduced-motion: reduce) {
-
-    .head,
-    .eyes {
-
-        animation: none;
-
-    }
-
 }
 
 </style>
+
 </head>
 
 
 <body>
 
-<div class="container">
+<main>
 
-    <div class="brand">
-        NOVA
-    </div>
+    <div class="top">
 
-    <div class="subtitle">
-        NEURAL VOICE ASSISTANT
-    </div>
+        <div>
 
+            <strong>
+                ✎ NOVA Live Whiteboard
+            </strong>
 
-    <!-- =================================
-         ROBOT FACE
-    ================================== -->
-
-    <svg
-        id="robot"
-        viewBox="0 0 320 235"
-        aria-label="Hold robot to activate voice chat"
-    >
-
-        <defs>
-
-            <linearGradient
-                id="shell"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1">
-
-                <stop
-                    offset="0%"
-                    stop-color="#FFFFFF"
-                />
-
-                <stop
-                    offset="100%"
-                    stop-color="#8FA8C1"
-                />
-
-            </linearGradient>
-
-            <linearGradient
-                id="visor"
-                x1="0"
-                y1="0"
-                x2="1"
-                y2="1">
-
-                <stop
-                    offset="0%"
-                    stop-color="#06101D"
-                />
-
-                <stop
-                    offset="100%"
-                    stop-color="#153148"
-                />
-
-            </linearGradient>
-
-            <filter id="glow">
-
-                <feGaussianBlur
-                    stdDeviation="3"
-                    result="blur"
-                />
-
-                <feMerge>
-
-                    <feMergeNode in="blur"/>
-
-                    <feMergeNode
-                        in="SourceGraphic"
-                    />
-
-                </feMerge>
-
-            </filter>
-
-        </defs>
-
-
-        <!-- Shadow -->
-
-        <ellipse
-
-            cx="160"
-
-            cy="224"
-
-            rx="90"
-
-            ry="5"
-
-            fill="#42BFFF"
-
-            opacity=".15"
-
-        />
-
-
-        <g class="head">
-
-
-            <!-- Left Ear -->
-
-            <rect
-
-                x="28"
-
-                y="87"
-
-                width="25"
-
-                height="60"
-
-                rx="13"
-
-                fill="#7894AF"
-
-            />
-
-
-            <!-- Right Ear -->
-
-            <rect
-
-                x="267"
-
-                y="87"
-
-                width="25"
-
-                height="60"
-
-                rx="13"
-
-                fill="#7894AF"
-
-            />
-
-
-            <!-- Main Robot Head -->
-
-            <rect
-
-                x="44"
-
-                y="28"
-
-                width="232"
-
-                height="180"
-
-                rx="70"
-
-                fill="url(#shell)"
-
-                stroke="#D8EFFF"
-
-                stroke-width="2"
-
-            />
-
-
-            <!-- Face Screen -->
-
-            <rect
-
-                x="59"
-
-                y="45"
-
-                width="202"
-
-                height="144"
-
-                rx="54"
-
-                fill="url(#visor)"
-
-                stroke="#34516B"
-
-                stroke-width="3"
-
-            />
-
-
-            <!-- LED Light -->
-
-            <path
-
-                d="M127 36 H193"
-
-                stroke="var(--accent)"
-
-                stroke-width="4"
-
-                stroke-linecap="round"
-
-                filter="url(#glow)"
-
-            />
-
-
-            <!-- Eyes -->
-
-            <g
-
-                class="eyes"
-
-                fill="var(--accent)"
-
-                filter="url(#glow)"
-
+            <div
+                class="hint"
+                id="lessonTitle"
             >
+                Select a lesson
+            </div>
 
-                <rect
+        </div>
 
-                    id="leftEye"
-
-                    x="99"
-
-                    y="85"
-
-                    width="32"
-
-                    height="40"
-
-                    rx="16"
-
-                />
-
-                <rect
-
-                    id="rightEye"
-
-                    x="189"
-
-                    y="85"
-
-                    width="32"
-
-                    height="40"
-
-                    rx="16"
-
-                />
-
-            </g>
-
-
-            <!-- Eyebrows -->
-
-            <path
-
-                id="brows"
-
-                d="M98 75 Q115 67 132 75
-                   M188 75 Q205 67 222 75"
-
-                stroke="var(--accent)"
-
-                stroke-width="2"
-
-                fill="none"
-
-                opacity="0"
-
-            />
-
-
-            <!-- Robot Mouth -->
-
-            <path
-
-                id="mouth"
-
-                d="M140 146 Q160 166 180 146"
-
-                fill="none"
-
-                stroke="var(--accent)"
-
-                stroke-width="5"
-
-                stroke-linecap="round"
-
-                filter="url(#glow)"
-
-            />
-
-
-            <!-- Robot Name -->
-
-            <text
-
-                x="160"
-
-                y="199"
-
-                font-family="Arial"
-
-                font-size="9"
-
-                letter-spacing="4"
-
-                text-anchor="middle"
-
-                fill="#365571"
-
-            >
-
-                NOVA
-
-            </text>
-
-        </g>
-
-    </svg>
-
-
-    <!-- Audio Reactive Wave -->
-
-    <canvas id="wave"></canvas>
-
-
-    <!-- Status -->
-
-    <div id="status" role="status" aria-live="polite">
-
-        STANDBY
+        <span id="status">
+            Ready
+        </span>
 
     </div>
 
 
-    <!-- Long Press Progress -->
+    <!-- DIGITAL BOARD -->
 
-    <div class="progress">
+    <div class="board">
 
-        <div id="progressFill"></div>
+        <div id="stepTitle">
+            Lesson step
+        </div>
+
+        <div id="written"></div>
+
+        <svg
+            id="diagram"
+            viewBox="0 0 400 100"
+            aria-label="Illustrative diagram"
+        ></svg>
 
     </div>
 
 
-    <div id="hint">
+    <!-- LESSON PROGRESS -->
 
-        Hold NOVA for 1 second to start Voice Chat.
+    <div id="bar">
+
+        <div id="fill"></div>
 
     </div>
 
 
-    <!-- Voice Buttons -->
+    <!-- CURRENT NARRATION -->
 
-    <button id="startButton">
+    <div id="narration">
 
-        🎙 Start Voice Chat
+        NOVA will explain
+        the current step here.
 
-    </button>
+    </div>
 
-
-    <button id="endButton" hidden>
-
-        End Voice Chat
-
-    </button>
-
-
-    <!-- Voice Audio -->
 
     <audio
-
-        id="audio"
-
+        id="player"
         controls
-
-        preload="auto"
-
         hidden
-
     ></audio>
 
 
-    <div id="micStatus">
+    <!-- LESSON CONTROLS -->
 
-        Microphone off
+    <div class="controls">
+
+        <button id="prev">
+            ◀ Previous
+        </button>
+
+        <button
+            id="play"
+            class="primary"
+        >
+            ▶ Play lesson
+        </button>
+
+        <button id="next">
+            Next ▶
+        </button>
+
+        <button
+            id="interrupt"
+            class="danger"
+        >
+            ✋ Interrupt / Ask
+        </button>
 
     </div>
 
 
-    <div class="footer">
+    <!-- STUDENT INTERRUPTION PANEL -->
 
-        NOVA V11 · DEVELOPED BY IDLAN
+    <div
+        id="interruptPanel"
+        hidden
+    >
+
+        <div
+            class="hint"
+            id="micState"
+        >
+
+            Explanation paused.
+            Ask by voice or type below.
+
+        </div>
+
+        <div class="controls">
+
+            <button id="record">
+                🎙 Record question
+            </button>
+
+            <button
+                id="stoprecord"
+                hidden
+            >
+                ■ Send recording
+            </button>
+
+        </div>
+
+
+        <textarea
+            id="question"
+            placeholder="Kenapa langkah ini digunakan?"
+        ></textarea>
+
+
+        <div class="controls">
+
+            <button id="send">
+                Ask NOVA
+            </button>
+
+            <button id="resume">
+                Resume lesson
+            </button>
+
+        </div>
+
+
+        <div
+            id="reply"
+            hidden
+        ></div>
+
+        <audio
+            id="answerPlayer"
+            controls
+            hidden
+        ></audio>
 
     </div>
 
-</div>
+
+    <div
+        class="hint"
+        style="margin-top:10px"
+    >
+
+        The board and spoken explanation
+        are aligned step-by-step.
+        Tap Interrupt to stop and ask.
+
+    </div>
+
+</main>
 
 
 <script>
@@ -783,1431 +391,1060 @@ audio {
 
 
 // =========================================
-// ELEMENTS
+// STREAMLIT COMMUNICATION
 // =========================================
 
 const $ = id =>
     document.getElementById(id);
 
-const robot = $("robot");
+function notify(type, other = {}) {
 
-const audio = $("audio");
-
-const canvas = $("wave");
-
-const ctx = canvas.getContext("2d");
-
-const mouth = $("mouth");
-
-
-// =========================================
-// STREAMLIT COMMUNICATION
-// =========================================
-
-function post(type, extra = {}) {
-
-    window.parent.postMessage({
+    parent.postMessage({
 
         isStreamlitMessage: true,
 
         type,
 
-        ...extra
+        ...other
 
     }, "*");
 
 }
 
+function height() {
 
-function resizeFrame() {
-
-    post(
-
+    notify(
         "streamlit:setFrameHeight",
-
         {
-
             height:
-                Math.ceil(
-                    document.body.scrollHeight
-                ) + 4
-
+                document.body.scrollHeight + 6
         }
-
     );
 
 }
 
 
 // =========================================
-// VARIABLES
+// JAVASCRIPT STATE
 // =========================================
 
-let args = {};
+let plan = null;
 
-let session = "";
+let planId = "";
 
-let active = false;
+let step = 0;
 
-let starting = false;
+let playing = false;
 
-let busy = false;
-
-let state = "STANDBY";
-
-let generation = 0;
-
-let waiting = "";
-
-let baseline = "";
+let pausedForQuestion = false;
 
 let seenReply = "";
 
-let stream = null;
+let media = null;
 
-let audioContext = null;
+let micStream = null;
 
-let micSource = null;
+let clip = [];
 
-let micAnalyser = null;
+let recTimer = null;
 
-let micData = null;
+const audio = $("player");
 
-let outputAnalyser = null;
+const answerAudio = $("answerPlayer");
 
-let outputData = null;
 
-let capture = null;
+function decodeBase64Audio(b64) {
 
-let encoding = false;
+    return (
+        "data:audio/mpeg;base64,"
+        + b64
+    );
 
-let holdTimer = null;
+}
 
-let holdStart = 0;
+function current() {
 
-let replyTimer = null;
+    return plan?.steps?.[step] || null;
 
-let time = 0;
-
-let energy = 0;
-
-let blockedReply = "";
+}
 
 
 // =========================================
-// STATUS COLORS
+// DIAGRAM ENGINE
 // =========================================
 
-const colors = {
+function diagram(kind) {
 
-    STANDBY: "#67E4FF",
+    const d = $("diagram");
 
-    LISTENING: "#57FFB8",
+    d.replaceChildren();
 
-    THINKING: "#B399FF",
+    const NS =
+        "http://www.w3.org/2000/svg";
 
-    SPEAKING: "#67E4FF",
+    function shape(
+        name,
+        attributes
+    ) {
 
-    PAUSED: "#FFD166",
+        const n =
+            document.createElementNS(
+                NS,
+                name
+            );
 
-    ERROR: "#FF8197"
+        for (
+            const [key, val]
+            of Object.entries(attributes)
+        ) {
+
+            n.setAttribute(
+                key,
+                String(val)
+            );
+
+        }
+
+        d.appendChild(n);
+
+        return n;
+
+    }
+
+
+    // GRAPH
+
+    if (kind === "graph") {
+
+        shape(
+            "path",
+            {
+                d:
+                    "M20 55 H380 "
+                    + "M200 5 V95",
+
+                stroke: "#8fa8b9",
+
+                "stroke-width": 2,
+
+                fill: "none"
+            }
+        );
+
+        shape(
+            "path",
+            {
+                d:
+                    "M90 8 Q200 185 310 8",
+
+                stroke: "#2d90b4",
+
+                "stroke-width": 4,
+
+                fill: "none"
+            }
+        );
+
+    }
+
+
+    // ELECTRIC CIRCUIT
+
+    else if (kind === "circuit") {
+
+        shape(
+            "rect",
+            {
+                x: 80,
+                y: 14,
+
+                width: 240,
+                height: 72,
+
+                rx: 5,
+
+                fill: "none",
+
+                stroke: "#397e9c",
+
+                "stroke-width": 3
+            }
+        );
+
+        shape(
+            "rect",
+            {
+                x: 178,
+                y: 6,
+
+                width: 45,
+                height: 15,
+
+                rx: 3,
+
+                fill: "#e7ac68"
+            }
+        );
+
+        shape(
+            "circle",
+            {
+                cx: 80,
+                cy: 50,
+
+                r: 16,
+
+                fill: "white",
+
+                stroke: "#397e9c",
+
+                "stroke-width": 3
+            }
+        );
+
+    }
+
+
+    // HISTORY TIMELINE
+
+    else if (kind === "timeline") {
+
+        shape(
+            "path",
+            {
+                d: "M30 53 H375",
+
+                stroke: "#397e9c",
+
+                "stroke-width": 4
+            }
+        );
+
+        for (
+            const [x, label]
+            of [
+                [100, "1957"],
+                [290, "1963"]
+            ]
+        ) {
+
+            shape(
+                "circle",
+                {
+                    cx: x,
+                    cy: 53,
+                    r: 12,
+
+                    fill: "#397e9c"
+                }
+            );
+
+            const t = shape(
+                "text",
+                {
+                    x: x,
+                    y: 28,
+
+                    "text-anchor":
+                        "middle",
+
+                    fill: "#273d54",
+
+                    "font-size": 16
+                }
+            );
+
+            t.textContent = label;
+
+        }
+
+    }
+
+
+    // ATOM MODEL
+
+    else if (kind === "atom") {
+
+        shape(
+            "circle",
+            {
+                cx: 200,
+                cy: 50,
+
+                r: 18,
+
+                fill: "#e99591"
+            }
+        );
+
+        for (
+            const r
+            of [42, 70]
+        ) {
+
+            shape(
+                "ellipse",
+                {
+                    cx: 200,
+                    cy: 50,
+
+                    rx: r,
+                    ry: r * .5,
+
+                    fill: "none",
+
+                    stroke: "#3d83a3",
+
+                    "stroke-width": 2
+                }
+            );
+
+        }
+
+    }
+
+
+    // BIOLOGY CELL
+
+    else if (kind === "cell") {
+
+        shape(
+            "ellipse",
+            {
+                cx: 200,
+                cy: 50,
+
+                rx: 125,
+                ry: 43,
+
+                fill: "#caeadd",
+
+                stroke: "#478a7c",
+
+                "stroke-width": 3
+            }
+        );
+
+        shape(
+            "circle",
+            {
+                cx: 190,
+                cy: 50,
+
+                r: 24,
+
+                fill: "#a1a0d9"
+            }
+        );
+
+    }
+
+
+    // SIMPLE TEXT DIAGRAM
+
+    else {
+
+        const t = shape(
+            "text",
+            {
+                x: 200,
+                y: 55,
+
+                "text-anchor":
+                    "middle",
+
+                fill: "#8096a9",
+
+                "font-size": 13
+            }
+        );
+
+        t.textContent =
+            "NOVA ✦ Learn • Think • Practice";
+
+    }
+
+}
+
+
+// =========================================
+// DISPLAY CURRENT STEP
+// =========================================
+
+function showStep(
+    index,
+    auto = false
+) {
+
+    if (!plan) return;
+
+    step = Math.min(
+
+        Math.max(index, 0),
+
+        plan.steps.length - 1
+    );
+
+    const s = current();
+
+    audio.pause();
+
+    audio.removeAttribute("src");
+
+    audio.hidden = true;
+
+    $("stepTitle").textContent =
+
+        `STEP ${step + 1} OF `
+        + `${plan.steps.length} · `
+        + s.title;
+
+    $("written").textContent = "";
+
+    $("narration").textContent =
+        s.say;
+
+    diagram(
+        s.kind
+    );
+
+    $("fill").style.width = "0";
+
+    $("prev").disabled = (
+        step === 0
+    );
+
+    $("next").disabled = (
+        step === plan.steps.length - 1
+    );
+
+    $("play").textContent =
+        "▶ Play this step";
+
+    playing = false;
+
+    if (auto) {
+        playStep();
+    }
+
+    height();
+
+}
+
+
+// =========================================
+// TYPING ANIMATION
+// =========================================
+
+function writeProgress(p) {
+
+    const s = current();
+
+    if (!s) return;
+
+    const count = Math.max(
+
+        0,
+
+        Math.min(
+
+            s.write.length,
+
+            Math.floor(
+                s.write.length * p
+            )
+
+        )
+    );
+
+    $("written").textContent =
+
+        s.write.slice(0, count)
+
+        + (
+            count < s.write.length
+            ? "▌"
+            : ""
+        );
+
+    $("fill").style.width =
+
+        `${Math.round(p * 100)}%`;
+
+}
+
+
+// =========================================
+// PLAY VOICE WITH CURRENT STEP
+// =========================================
+
+async function playStep() {
+
+    if (
+        !current()
+        || pausedForQuestion
+    ) {
+        return;
+    }
+
+    const s = current();
+
+    // Resume existing playback.
+
+    if (
+        audio.paused
+
+        && audio.src
+
+        && audio.currentTime > 0
+
+        && audio.currentTime < audio.duration
+    ) {
+
+        try {
+
+            await audio.play();
+
+            playing = true;
+
+            $("status").textContent =
+                "Speaking";
+
+            $("play").textContent =
+                "Ⅱ Pause";
+
+            return;
+
+        } catch (_) {}
+
+    }
+
+    audio.pause();
+
+    audio.removeAttribute("src");
+
+    audio.hidden = true;
+
+    if (!s.audio) {
+
+        writeProgress(1);
+
+        $("status").textContent =
+            "Voice unavailable";
+
+        return;
+
+    }
+
+    audio.src = decodeBase64Audio(
+        s.audio
+    );
+
+    audio.hidden = false;
+
+    try {
+
+        await audio.play();
+
+        playing = true;
+
+        $("status").textContent =
+            "Speaking";
+
+        $("play").textContent =
+            "Ⅱ Pause";
+
+    } catch (_) {
+
+        writeProgress(1);
+
+        $("status").textContent =
+            "Tap audio Play";
+
+    }
+
+    height();
+
+}
+
+
+// =========================================
+// PLAY / PAUSE / NEXT / PREVIOUS
+// =========================================
+
+$("play").onclick = () => {
+
+    if (!audio.paused) {
+
+        audio.pause();
+
+        playing = false;
+
+        $("status").textContent =
+            "Paused";
+
+        $("play").textContent =
+            "▶ Resume";
+
+    } else {
+
+        playStep();
+
+    }
 
 };
 
 
-// =========================================
-// CHANGE ROBOT STATUS
-// =========================================
+$("prev").onclick = () => {
 
-function setStatus(value, message) {
-
-    state = value;
-
-    document.body.style.setProperty(
-
-        "--accent",
-
-        colors[value] || colors.STANDBY
-
+    showStep(
+        step - 1
     );
 
-    $("status").textContent = value;
-
-    const messages = {
-
-        STANDBY:
-            "Hold NOVA for 1 second to start Voice Chat.",
-
-        LISTENING:
-            "Speak naturally. NOVA is listening.",
-
-        THINKING:
-            "NOVA is processing your request...",
-
-        SPEAKING:
-            "NOVA is responding...",
-
-        PAUSED:
-            "Press Play to hear NOVA.",
-
-        ERROR:
-            "Check microphone or internet connection."
-
-    };
-
-    $("hint").textContent =
-
-        message || messages[value] || "";
-
-    $("startButton").hidden =
-
-        active || starting;
-
-    $("startButton").disabled =
-
-        busy || Boolean(waiting) || !session;
-
-    $("endButton").hidden =
-
-        !(active || starting);
-
-    const micOn =
-
-        stream?.getAudioTracks().some(
-
-            track =>
-
-                track.enabled &&
-
-                track.readyState === "live"
-
-        );
-
-    $("micStatus").textContent =
-
-        micOn
-
-        ? "● Microphone on"
-
-        : "Microphone off";
-
-    $("micStatus").style.color =
-
-        micOn
-
-        ? "#57FFB8"
-
-        : "#9CB6CE";
-
-    resizeFrame();
-
-}
+};
 
 
-// =========================================
-// WEB AUDIO
-// =========================================
+$("next").onclick = () => {
 
-async function prepareAudio() {
+    showStep(
+        step + 1
+    );
 
-    const AudioContextClass =
+};
 
-        window.AudioContext ||
 
-        window.webkitAudioContext;
+audio.addEventListener(
+    "play",
+    () => {
 
-    if (!AudioContextClass) {
+        playing = true;
 
-        throw new Error(
-            "Web Audio unavailable"
-        );
+        $("status").textContent =
+            "Speaking";
+
+        $("play").textContent =
+            "Ⅱ Pause";
 
     }
+);
 
-    if (!audioContext) {
 
-        audioContext =
+audio.addEventListener(
+    "timeupdate",
+    () => {
 
-            new AudioContextClass();
+        if (
+            Number.isFinite(audio.duration)
 
-    }
+            && audio.duration > 0
+        ) {
 
-    if (!outputAnalyser) {
+            writeProgress(
 
-        outputAnalyser =
-
-            audioContext.createAnalyser();
-
-        outputAnalyser.fftSize = 1024;
-
-        outputData =
-
-            new Float32Array(1024);
-
-        const outputSource =
-
-            audioContext.createMediaElementSource(
-
-                audio
+                audio.currentTime
+                / audio.duration
 
             );
 
-        outputSource.connect(
-
-            outputAnalyser
-
-        );
-
-        outputAnalyser.connect(
-
-            audioContext.destination
-
-        );
+        }
 
     }
-
-    if (audioContext.state === "suspended") {
-
-        await audioContext.resume();
-
-    }
-
-}
+);
 
 
-// =========================================
-// MEASURE REAL AUDIO AMPLITUDE
-// =========================================
+audio.addEventListener(
+    "ended",
+    () => {
 
-function rms(analyser, data) {
+        playing = false;
 
-    if (!analyser || !data) {
+        writeProgress(1);
 
-        return 0;
+        $("play").textContent =
+            "▶ Replay";
 
-    }
+        $("status").textContent =
+            "Step complete";
 
-    analyser.getFloatTimeDomainData(data);
+        if (
+            !pausedForQuestion
 
-    let total = 0;
+            && step < plan.steps.length - 1
+        ) {
 
-    for (const value of data) {
+            setTimeout(
+                () => {
 
-        total += value * value;
+                    if (
+                        !pausedForQuestion
 
-    }
+                        && !playing
+                    ) {
 
-    return Math.sqrt(
+                        showStep(
+                            step + 1,
+                            true
+                        );
 
-        total / data.length
+                    }
 
-    );
-
-}
-
-
-// =========================================
-// MICROPHONE CONTROL
-// =========================================
-
-function microphone(enabled) {
-
-    stream?.getAudioTracks().forEach(
-
-        track => {
-
-            track.enabled = enabled;
+                },
+                500
+            );
 
         }
 
-    );
+    }
+);
 
-    const on = Boolean(
 
-        enabled && stream
+// =========================================
+// INTERRUPT NOVA
+// =========================================
 
-    );
+function interrupt() {
 
-    $("micStatus").textContent =
+    pausedForQuestion = true;
 
-        on
+    audio.pause();
 
-        ? "● Microphone on"
+    answerAudio.pause();
 
-        : "Microphone off";
+    $("interruptPanel").hidden =
+        false;
 
-    $("micStatus").style.color =
+    $("status").textContent =
+        "Lesson paused — ask a question";
 
-        on
+    $("play").disabled = true;
 
-        ? "#57FFB8"
-
-        : "#9CB6CE";
+    height();
 
 }
 
 
+$("interrupt").onclick =
+    interrupt;
+
+
+// =========================================
+// MICROPHONE RECORDING
+// =========================================
+
 function releaseMic() {
 
-    stream?.getTracks().forEach(
+    clearTimeout(
+        recTimer
+    );
+
+    recTimer = null;
+
+    micStream?.getTracks().forEach(
 
         track => track.stop()
 
     );
 
-    try {
+    micStream = null;
 
-        micSource?.disconnect();
+    media = null;
 
-    } catch (_) {}
+    $("record").hidden = false;
 
-    stream = null;
-
-    micSource = null;
-
-    micAnalyser = null;
-
-    micData = null;
-
-    microphone(false);
+    $("stoprecord").hidden = true;
 
 }
 
 
 // =========================================
-// START CONTINUOUS VOICE CHAT
+// SEND QUESTION TO PYTHON
 // =========================================
 
-async function startVoice() {
+function emit(payload) {
 
-    if (
+    const id =
 
-        active ||
+        crypto.randomUUID?.()
 
-        starting ||
+        || String(Date.now()) + Math.random();
 
-        busy ||
+    notify(
+        "streamlit:setComponentValue",
 
-        waiting ||
+        {
+            value: {
 
-        !session
+                ...payload,
 
-    ) {
+                id,
 
-        return;
+                plan_id: planId,
 
-    }
+                step
+            },
 
-    const token = ++generation;
-
-    starting = true;
-
-    setStatus(
-
-        "STANDBY",
-
-        "Requesting microphone permission..."
-
+            dataType: "json"
+        }
     );
+
+    $("micState").textContent =
+        "Asking NOVA...";
+
+}
+
+
+// =========================================
+// STUDENT TYPED QUESTION
+// =========================================
+
+$("send").onclick = () => {
+
+    const text = $("question").value.trim();
+
+    if (!text) return;
+
+    emit({
+
+        type: "question",
+
+        text
+    });
+
+    $("send").disabled = true;
+
+};
+
+
+// =========================================
+// STUDENT SPOKEN QUESTION
+// =========================================
+
+$("record").onclick = async () => {
 
     try {
 
-        if (
-
-            !navigator.mediaDevices?.getUserMedia
-
-            || !window.MediaRecorder
-
-        ) {
-
-            throw new Error(
-
-                "Microphone not supported"
-
-            );
-
-        }
-
-        await prepareAudio();
-
-        const recordingStream =
-
-            await navigator.mediaDevices.getUserMedia({
+        micStream = await navigator
+            .mediaDevices
+            .getUserMedia({
 
                 audio: {
 
                     echoCancellation: true,
 
-                    noiseSuppression: true,
-
-                    autoGainControl: true,
-
-                    channelCount: 1
-
+                    noiseSuppression: true
                 }
 
             });
 
-        if (token !== generation) {
+        const types = [
 
-            recordingStream.getTracks().forEach(
+            "audio/webm;codecs=opus",
 
-                track => track.stop()
+            "audio/mp4",
+
+            "audio/webm"
+        ];
+
+        const mime = types.find(
+
+            type =>
+                MediaRecorder.isTypeSupported(
+                    type
+                )
+
+        );
+
+        media = new MediaRecorder(
+
+            micStream,
+
+            mime
+                ? {mimeType: mime}
+                : {}
+
+        );
+
+        clip = [];
+
+        media.ondataavailable = e => {
+
+            if (e.data.size) {
+                clip.push(e.data);
+            }
+
+        };
+
+        media.onstop = async () => {
+
+            const type =
+
+                media?.mimeType
+
+                || clip[0]?.type
+
+                || "audio/webm";
+
+            const blob = new Blob(
+
+                clip,
+
+                {type}
 
             );
 
-            return;
+            releaseMic();
 
-        }
+            if (!blob.size) return;
 
-        stream = recordingStream;
+            const data = await new Promise(
 
-        micSource =
+                (resolve, reject) => {
 
-            audioContext.createMediaStreamSource(
+                    const reader =
+                        new FileReader();
 
-                stream
+                    reader.onload = () => {
+
+                        resolve(
+
+                            String(reader.result)
+                                .split(",")[1]
+
+                        );
+
+                    };
+
+                    reader.onerror = reject;
+
+                    reader.readAsDataURL(blob);
+
+                }
 
             );
 
-        micAnalyser =
+            emit({
 
-            audioContext.createAnalyser();
+                type: "question",
 
-        micAnalyser.fftSize = 1024;
+                audio: data,
 
-        micData =
+                mime: type
+            });
 
-            new Float32Array(1024);
+        };
 
-        micSource.connect(
+        media.start();
 
-            micAnalyser
+        $("record").hidden = true;
 
+        $("stoprecord").hidden = false;
+
+        $("micState").textContent =
+
+            "Recording... Tap Send recording "
+            + "when finished.";
+
+        recTimer = setTimeout(
+            () => {
+
+                if (
+                    media?.state === "recording"
+                ) {
+
+                    media.stop();
+
+                }
+
+            },
+            18000
         );
 
-        stream.getAudioTracks().forEach(
+    } catch (_) {
 
-            track => {
+        $("micState").textContent =
 
-                track.addEventListener(
+            "Microphone unavailable. "
+            + "Type your question instead.";
 
-                    "ended",
-
-                    () => {
-
-                        if (token === generation) {
-
-                            stopVoice();
-
-                            setStatus(
-
-                                "ERROR",
-
-                                "Microphone disconnected."
-
-                            );
-
-                        }
-
-                    }
-
-                );
-
-            }
-
-        );
-
-        audio.pause();
-
-        starting = false;
-
-        active = true;
-
-        blockedReply = "";
-
-        setStatus("LISTENING");
-
-        beginListening();
-
-    } catch (error) {
-
-        if (token !== generation) {
-
-            return;
-
-        }
-
-        stopVoice();
-
-        setStatus(
-
-            "ERROR",
-
-            "Allow microphone permission or use Manual Voice Input."
-
-        );
+        releaseMic();
 
     }
 
-}
+};
+
+
+$("stoprecord").onclick = () => {
+
+    if (
+        media?.state === "recording"
+    ) {
+
+        media.stop();
+
+    }
+
+};
 
 
 // =========================================
-// STOP VOICE CHAT
+// RESUME LESSON
 // =========================================
 
-function stopVoice() {
+$("resume").onclick = () => {
 
-    generation++;
+    if (
+        media?.state === "recording"
+    ) {
 
-    active = false;
+        media.onstop = null;
 
-    starting = false;
-
-    encoding = false;
-
-    if (waiting) {
-
-        blockedReply = waiting;
+        media.stop();
 
     }
-
-    if (capture) {
-
-        capture.discard = true;
-
-        try {
-
-            if (
-
-                capture.recorder.state !== "inactive"
-
-            ) {
-
-                capture.recorder.stop();
-
-            }
-
-        } catch (_) {}
-
-        capture = null;
-
-    }
-
-    audio.pause();
 
     releaseMic();
 
-    energy = 0;
+    answerAudio.pause();
 
-    setStatus(
+    pausedForQuestion = false;
 
-        busy || waiting
+    $("interruptPanel").hidden = true;
 
-        ? "THINKING"
+    $("send").disabled = false;
 
-        : "STANDBY",
+    $("micState").textContent =
 
-        "Voice Chat ended. Microphone off."
+        "Explanation paused. "
+        + "Ask by voice or type below.";
 
-    );
+    $("play").disabled = false;
 
-}
+    $("status").textContent =
+        "Ready to continue";
 
+    // Continue from current step.
 
-// =========================================
-// RECORDING FORMAT
-// =========================================
+    playStep();
 
-function recordingOptions() {
+    height();
 
-    const supportedTypes = [
-
-        "audio/webm;codecs=opus",
-
-        "audio/mp4",
-
-        "audio/ogg;codecs=opus",
-
-        "audio/webm"
-
-    ];
-
-    for (const type of supportedTypes) {
-
-        if (
-
-            MediaRecorder.isTypeSupported(type)
-
-        ) {
-
-            return {
-
-                mimeType: type
-
-            };
-
-        }
-
-    }
-
-    return {};
-
-}
+};
 
 
 // =========================================
-// FINISH RECORDING
-// =========================================
-
-function finishRecording(discard = false) {
-
-    if (!capture) {
-
-        return;
-
-    }
-
-    capture.discard =
-
-        capture.discard || discard;
-
-    if (capture.stopping) {
-
-        return;
-
-    }
-
-    capture.stopping = true;
-
-    if (!discard) {
-
-        microphone(false);
-
-        setStatus("THINKING");
-
-    }
-
-    if (
-
-        capture.recorder.state !== "inactive"
-
-    ) {
-
-        capture.recorder.stop();
-
-    }
-
-}
-
-
-// =========================================
-// LISTEN TO USER
-// =========================================
-
-function beginListening() {
-
-    if (
-
-        !active ||
-
-        busy ||
-
-        waiting ||
-
-        encoding ||
-
-        capture ||
-
-        !stream ||
-
-        !audio.paused ||
-
-        state === "PAUSED"
-
-    ) {
-
-        return;
-
-    }
-
-    microphone(true);
-
-    const token = generation;
-
-    try {
-
-        const recorder =
-
-            new MediaRecorder(
-
-                stream,
-
-                recordingOptions()
-
-            );
-
-        const current = {
-
-            recorder,
-
-            chunks: [],
-
-            start: performance.now(),
-
-            firstSpeech: 0,
-
-            lastSpeech: 0,
-
-            discard: false,
-
-            stopping: false
-
-        };
-
-        capture = current;
-
-
-        recorder.ondataavailable = event => {
-
-            if (event.data.size > 0) {
-
-                current.chunks.push(
-
-                    event.data
-
-                );
-
-            }
-
-        };
-
-
-        recorder.onerror = () => {
-
-            if (token !== generation) {
-
-                return;
-
-            }
-
-            stopVoice();
-
-            setStatus(
-
-                "ERROR",
-
-                "Recording failed. Restart Voice Chat."
-
-            );
-
-        };
-
-
-        recorder.onstop = async () => {
-
-            if (capture === current) {
-
-                capture = null;
-
-            }
-
-            if (
-
-                token !== generation
-
-                || !active
-
-            ) {
-
-                return;
-
-            }
-
-            if (
-
-                current.discard
-
-                || !current.firstSpeech
-
-            ) {
-
-                if (
-
-                    !busy &&
-
-                    !waiting &&
-
-                    state === "LISTENING"
-
-                ) {
-
-                    beginListening();
-
-                }
-
-                return;
-
-            }
-
-            encoding = true;
-
-            microphone(false);
-
-            setStatus("THINKING");
-
-            try {
-
-                const mime =
-
-                    recorder.mimeType ||
-
-                    current.chunks[0]?.type ||
-
-                    "audio/webm";
-
-                const blob = new Blob(
-
-                    current.chunks,
-
-                    {type: mime}
-
-                );
-
-                if (!blob.size) {
-
-                    throw new Error(
-
-                        "Empty recording"
-
-                    );
-
-                }
-
-                const encoded =
-
-                    await new Promise(
-
-                        (resolve, reject) => {
-
-                            const reader =
-
-                                new FileReader();
-
-                            reader.onload = () => {
-
-                                resolve(
-
-                                    String(reader.result)
-
-                                        .split(",")[1]
-
-                                );
-
-                            };
-
-                            reader.onerror = reject;
-
-                            reader.readAsDataURL(blob);
-
-                        }
-
-                    );
-
-                if (
-
-                    token !== generation
-
-                    || !active
-
-                ) {
-
-                    return;
-
-                }
-
-                waiting =
-
-                    window.crypto?.randomUUID?.()
-
-                    || Date.now() + "-" + Math.random();
-
-                baseline = args.reply_id || "";
-
-                encoding = false;
-
-
-                // Send audio to app.py
-
-                post(
-
-                    "streamlit:setComponentValue",
-
-                    {
-
-                        value: {
-
-                            id: waiting,
-
-                            session_id: session,
-
-                            type: "voice",
-
-                            audio: encoded,
-
-                            mime: mime
-
-                        },
-
-                        dataType: "json"
-
-                    }
-
-                );
-
-
-                clearTimeout(replyTimer);
-
-                replyTimer = setTimeout(
-
-                    () => {
-
-                        if (waiting) {
-
-                            waiting = "";
-
-                            busy = false;
-
-                            stopVoice();
-
-                            setStatus(
-
-                                "ERROR",
-
-                                "Response timed out. Try again."
-
-                            );
-
-                        }
-
-                    },
-
-                    180000
-
-                );
-
-            } catch (error) {
-
-                if (token === generation) {
-
-                    stopVoice();
-
-                    setStatus(
-
-                        "ERROR",
-
-                        "Unable to send recording."
-
-                    );
-
-                }
-
-            }
-
-        };
-
-        recorder.start();
-
-        setStatus("LISTENING");
-
-    } catch (error) {
-
-        stopVoice();
-
-        setStatus(
-
-            "ERROR",
-
-            "Unable to start voice recording."
-
-        );
-
-    }
-
-}
-
-
-// =========================================
-// AUTO SILENCE DETECTION
-// =========================================
-
-const voiceTimer = setInterval(
-
-    () => {
-
-        if (
-
-            !active ||
-
-            state !== "LISTENING" ||
-
-            !capture ||
-
-            capture.stopping
-
-        ) {
-
-            return;
-
-        }
-
-        const now = performance.now();
-
-        const current = capture;
-
-        const volume = rms(
-
-            micAnalyser,
-
-            micData
-
-        );
-
-        const threshold =
-
-            Number(args.threshold)
-
-            || 0.018;
-
-        const silenceTime =
-
-            Number(args.silence_ms)
-
-            || 1500;
-
-
-        if (volume > threshold) {
-
-            if (!current.firstSpeech) {
-
-                current.firstSpeech = now;
-
-            }
-
-            current.lastSpeech = now;
-
-        }
-
-
-        // Send after 1.5 seconds of silence
-
-        if (
-
-            current.firstSpeech &&
-
-            now - current.lastSpeech >= silenceTime
-
-        ) {
-
-            const duration =
-
-                current.lastSpeech
-
-                - current.firstSpeech;
-
-            finishRecording(
-
-                duration < 150
-
-            );
-
-            return;
-
-        }
-
-
-        // Maximum recording: 30 seconds
-
-        if (
-
-            now - current.start >= 30000
-
-        ) {
-
-            finishRecording(
-
-                !current.firstSpeech
-
-            );
-
-            return;
-
-        }
-
-
-        // Discard quiet recording locally
-
-        if (
-
-            !current.firstSpeech &&
-
-            now - current.start >= 15000
-
-        ) {
-
-            finishRecording(true);
-
-        }
-
-    },
-
-    50
-
-);
-
-
-// =========================================
-// PLAY NOVA VOICE
-// =========================================
-
-async function playReply() {
-
-    try {
-
-        await prepareAudio();
-
-        await audio.play();
-
-    } catch (error) {
-
-        setStatus(
-
-            "PAUSED",
-
-            "Autoplay blocked. Press Play below."
-
-        );
-
-    }
-
-}
-
-
-function loadReply(encoded, autoplay) {
-
-    audio.pause();
-
-    if (!encoded) {
-
-        audio.hidden = true;
-
-        audio.removeAttribute("src");
-
-        setStatus(
-
-            active
-
-            ? "LISTENING"
-
-            : "STANDBY"
-
-        );
-
-        if (active) {
-
-            beginListening();
-
-        }
-
-        return;
-
-    }
-
-    microphone(false);
-
-    audio.src =
-
-        "data:audio/mpeg;base64,"
-
-        + encoded;
-
-    audio.hidden = false;
-
-    if (autoplay) {
-
-        setStatus("PAUSED");
-
-        playReply();
-
-    } else {
-
-        setStatus(
-
-            "STANDBY",
-
-            "Press Play to hear NOVA."
-
-        );
-
-    }
-
-    resizeFrame();
-
-}
-
-
-// =========================================
-// AUDIO STARTED
-// =========================================
-
-audio.addEventListener(
-
-    "play",
-
-    () => {
-
-        prepareAudio().catch(
-
-            () => {}
-
-        );
-
-        setStatus("SPEAKING");
-
-        finishRecording(true);
-
-        microphone(false);
-
-    }
-
-);
-
-
-// =========================================
-// AUDIO PAUSED
-// =========================================
-
-audio.addEventListener(
-
-    "pause",
-
-    () => {
-
-        if (
-
-            !audio.ended &&
-
-            state === "SPEAKING"
-
-        ) {
-
-            setStatus(
-
-                active
-
-                ? "PAUSED"
-
-                : "STANDBY"
-
-            );
-
-        }
-
-    }
-
-);
-
-
-// =========================================
-// NOVA FINISHED SPEAKING
-// =========================================
-
-audio.addEventListener(
-
-    "ended",
-
-    () => {
-
-        if (active) {
-
-            setStatus("LISTENING");
-
-            const token = generation;
-
-            setTimeout(
-
-                () => {
-
-                    if (
-
-                        active &&
-
-                        token === generation
-
-                    ) {
-
-                        beginListening();
-
-                    }
-
-                },
-
-                350
-
-            );
-
-        } else {
-
-            setStatus("STANDBY");
-
-        }
-
-    }
-
-);
-
-
-audio.addEventListener(
-
-    "error",
-
-    () => {
-
-        if (audio.getAttribute("src")) {
-
-            stopVoice();
-
-            setStatus(
-
-                "ERROR",
-
-                "Audio playback failed."
-
-            );
-
-        }
-
-    }
-
-);
-
-
-// =========================================
-// RECEIVE RESPONSE FROM STREAMLIT
+// RECEIVE PYTHON DATA
 // =========================================
 
 window.addEventListener(
-
     "message",
-
     event => {
 
         if (
 
-            event.source !== window.parent
+            event.source !== parent
 
-            || event.data?.type !== "streamlit:render"
+            || event.data?.type
+                !== "streamlit:render"
 
         ) {
 
@@ -2215,847 +1452,156 @@ window.addEventListener(
 
         }
 
-        args = event.data.args || {};
-
-        const incomingSession =
-
-            args.session_id || "";
+        const args =
+            event.data.args || {};
 
 
-        // Reset when chat session changes
+        // NEW LESSON
 
         if (
+            args.plan_id
 
-            session &&
-
-            session !== incomingSession
-
+            && args.plan_id !== planId
         ) {
 
-            clearTimeout(replyTimer);
+            planId = args.plan_id;
 
-            stopVoice();
+            plan = args.plan || null;
 
-            waiting = "";
+            step = 0;
 
-            baseline = "";
+            pausedForQuestion = false;
 
             seenReply = "";
 
-            blockedReply = "";
+            $("lessonTitle").textContent =
 
-            busy = false;
+                `${plan?.subject || ""}`
+                + " • "
+                + `${plan?.topic || ""}`;
 
-            audio.hidden = true;
+            $("interruptPanel").hidden =
+                true;
 
-            audio.removeAttribute("src");
+            $("play").disabled = false;
 
-            setStatus("STANDBY");
+            showStep(
+                0,
+                false
+            );
 
         }
 
-        session = incomingSession;
 
-        busy = Boolean(args.busy);
+        // ANSWER TO INTERRUPTION
 
-        const reply =
-
-            args.reply_id || "";
-
-
-        // Voice request completed
+        const reply = args.reply;
 
         if (
+            reply?.id
 
-            waiting &&
-
-            args.ack_id === waiting &&
-
-            !busy &&
-
-            (
-
-                args.error
-
-                || reply !== baseline
-
-            )
-
+            && reply.id !== seenReply
         ) {
 
-            clearTimeout(replyTimer);
+            seenReply = reply.id;
 
-            const cancelled =
+            pausedForQuestion = true;
 
-                blockedReply === waiting;
+            $("reply").hidden = false;
 
-            waiting = "";
+            $("reply").textContent =
+                reply.text || "";
 
-            if (
+            $("send").disabled = false;
 
-                args.error &&
+            $("question").value = "";
 
-                reply === baseline
+            $("micState").textContent =
 
-            ) {
+                "NOVA answered. "
+                + "Resume when ready.";
 
-                stopVoice();
+            if (reply.audio) {
 
-                setStatus(
+                answerAudio.src =
 
-                    "ERROR",
-
-                    args.error
-
-                );
-
-            } else {
-
-                seenReply = reply;
-
-                loadReply(
-
-                    args.audio || "",
-
-                    active && !cancelled
-
-                );
-
-                if (
-
-                    args.error
-
-                    && !args.audio
-
-                ) {
-
-                    $("hint").textContent =
-
-                        args.error;
-
-                }
-
-            }
-
-        }
-
-
-        // AI is processing
-
-        else if (busy || waiting) {
-
-            finishRecording(true);
-
-            microphone(false);
-
-            setStatus("THINKING");
-
-        }
-
-
-        // New manual or command center reply
-
-        else if (
-
-            reply &&
-
-            reply !== seenReply
-
-        ) {
-
-            seenReply = reply;
-
-            setStatus("THINKING");
-
-            finishRecording(true);
-
-            loadReply(
-
-                args.audio || "",
-
-                true
-
-            );
-
-            if (
-
-                args.error
-
-                && !args.audio
-
-            ) {
-
-                $("hint").textContent =
-
-                    args.error;
-
-            }
-
-        }
-
-
-        // Continue listening
-
-        else if (
-
-            active &&
-
-            !capture &&
-
-            !encoding &&
-
-            state !== "PAUSED" &&
-
-            state !== "SPEAKING"
-
-        ) {
-
-            beginListening();
-
-        }
-
-
-        else if (
-
-            !active &&
-
-            !busy &&
-
-            !waiting &&
-
-            state === "THINKING"
-
-        ) {
-
-            setStatus("STANDBY");
-
-        }
-
-        $("startButton").disabled =
-
-            busy || Boolean(waiting) || !session;
-
-        resizeFrame();
-
-    }
-
-);
-
-
-// =========================================
-// LONG PRESS ACTIVATION
-// =========================================
-
-function toggleVoice() {
-
-    if (active || starting) {
-
-        stopVoice();
-
-    } else {
-
-        startVoice();
-
-    }
-
-}
-
-
-robot.addEventListener(
-
-    "pointerdown",
-
-    event => {
-
-        if (
-
-            event.pointerType === "mouse"
-
-            && event.button !== 0
-
-        ) {
-
-            return;
-
-        }
-
-        if (holdTimer) {
-
-            return;
-
-        }
-
-        event.preventDefault();
-
-        try {
-
-            robot.setPointerCapture(
-
-                event.pointerId
-
-            );
-
-        } catch (_) {}
-
-
-        // Unlock Web Audio using user gesture
-
-        if (!active && !busy) {
-
-            prepareAudio().catch(
-
-                () => {}
-
-            );
-
-        }
-
-        holdStart =
-
-            performance.now();
-
-
-        // Activate after 1 second
-
-        holdTimer = setTimeout(
-
-            () => {
-
-                holdStart = 0;
-
-                $("progressFill").style.width =
-
-                    "100%";
-
-                toggleVoice();
-
-            },
-
-            1000
-
-        );
-
-    }
-
-);
-
-
-function cancelHold() {
-
-    clearTimeout(holdTimer);
-
-    holdTimer = null;
-
-    holdStart = 0;
-
-    $("progressFill").style.width =
-
-        "0%";
-
-}
-
-
-robot.addEventListener(
-
-    "pointerup",
-
-    cancelHold
-
-);
-
-robot.addEventListener(
-
-    "pointercancel",
-
-    cancelHold
-
-);
-
-robot.addEventListener(
-
-    "lostpointercapture",
-
-    cancelHold
-
-);
-
-robot.addEventListener(
-
-    "contextmenu",
-
-    event => event.preventDefault()
-
-);
-
-
-$("startButton").onclick = startVoice;
-
-$("endButton").onclick = stopVoice;
-
-
-// =========================================
-// REAL AUDIO REACTIVE WAVEFORM
-// =========================================
-
-function animate() {
-
-    requestAnimationFrame(animate);
-
-    if (document.hidden) {
-
-        return;
-
-    }
-
-
-    // Long press progress
-
-    if (holdStart) {
-
-        const progress =
-
-            Math.min(
-
-                100,
-
-                (
-
-                    performance.now()
-
-                    - holdStart
-
-                ) / 10
-
-            );
-
-        $("progressFill").style.width =
-
-            progress + "%";
-
-    }
-
-
-    // Responsive canvas
-
-    const W = canvas.clientWidth;
-
-    const H = canvas.clientHeight;
-
-    const dpr =
-
-        Math.min(
-
-            window.devicePixelRatio || 1,
-
-            2
-
-        );
-
-    if (
-
-        canvas.width !== Math.round(W*dpr)
-
-        ||
-
-        canvas.height !== Math.round(H*dpr)
-
-    ) {
-
-        canvas.width = Math.round(W*dpr);
-
-        canvas.height = Math.round(H*dpr);
-
-    }
-
-    ctx.setTransform(
-
-        dpr, 0,
-
-        0, dpr,
-
-        0, 0
-
-    );
-
-    ctx.clearRect(
-
-        0, 0,
-
-        W, H
-
-    );
-
-    let samples = null;
-
-    let volume = 0;
-
-
-    // Real microphone sound
-
-    if (state === "LISTENING") {
-
-        samples = micData;
-
-        volume = rms(
-
-            micAnalyser,
-
-            micData
-
-        );
-
-    }
-
-
-    // Real AI voice output
-
-    else if (state === "SPEAKING") {
-
-        samples = outputData;
-
-        volume = rms(
-
-            outputAnalyser,
-
-            outputData
-
-        );
-
-    }
-
-    energy +=
-
-        (
-
-            Math.min(1, volume * 6)
-
-            - energy
-
-        ) * 0.3;
-
-    time += 0.045;
-
-    const color =
-
-        colors[state]
-
-        || colors.STANDBY;
-
-
-    // Draw 3 layers of smooth wave
-
-    for (
-
-        let layer = 0;
-
-        layer < 3;
-
-        layer++
-
-    ) {
-
-        ctx.beginPath();
-
-        for (
-
-            let x = 0;
-
-            x <= W;
-
-            x++
-
-        ) {
-
-            const p =
-
-                x / Math.max(W, 1);
-
-            const envelope =
-
-                Math.sin(Math.PI * p);
-
-            let y;
-
-
-            if (samples) {
-
-                const index =
-
-                    Math.min(
-
-                        samples.length - 1,
-
-                        Math.floor(
-
-                            p * (samples.length - 1)
-
-                        )
-
+                    decodeBase64Audio(
+                        reply.audio
                     );
 
-                const sample = samples[index];
+                answerAudio.hidden = false;
 
-                const smoothWave =
-
-                    Math.sin(
-
-                        p * 27
-
-                        - time * 3
-
-                        + layer
-
-                    )
-
-                    * energy
-
-                    * H * 0.22;
-
-                y =
-
-                    H / 2
-
-                    +
-
-                    envelope *
-
-                    (
-
-                        sample * H * 0.75
-
-                        + smoothWave
-
-                    );
-
-            } else {
-
-
-                // Soft animation during standby
-
-                y =
-
-                    H / 2
-
-                    +
-
-                    envelope *
-
-                    Math.sin(
-
-                        p * 22
-
-                        - time
-
-                        + layer
-
-                    )
-
-                    * 3;
+                answerAudio.play().catch(
+                    () => {}
+                );
 
             }
 
-            if (x === 0) {
-
-                ctx.moveTo(x, y);
-
-            } else {
-
-                ctx.lineTo(x, y);
-
-            }
+            height();
 
         }
 
-        ctx.strokeStyle = color;
-
-        ctx.globalAlpha =
-
-            1 - layer * 0.28;
-
-        ctx.lineWidth = 2;
-
-        ctx.shadowColor = color;
-
-        ctx.shadowBlur = 10;
-
-        ctx.stroke();
+        height();
 
     }
-
-    ctx.globalAlpha = 1;
-
-    ctx.shadowBlur = 0;
-
-
-    // =====================================
-    // ROBOT MOUTH ANIMATION
-    // =====================================
-
-    if (state === "SPEAKING") {
-
-        const opening =
-
-            2 + energy * 20;
-
-        mouth.setAttribute(
-
-            "d",
-
-            `M140 146
-             Q160 ${146-opening} 180 146
-             Q160 ${146+opening} 140 146`
-
-        );
-
-    }
-
-
-    else if (state === "LISTENING") {
-
-        mouth.setAttribute(
-
-            "d",
-
-            "M145 151 Q160 145 175 151"
-
-        );
-
-    }
-
-
-    else if (state === "THINKING") {
-
-        mouth.setAttribute(
-
-            "d",
-
-            "M148 151 H172"
-
-        );
-
-    }
-
-
-    else {
-
-        mouth.setAttribute(
-
-            "d",
-
-            "M140 146 Q160 166 180 146"
-
-        );
-
-    }
-
-
-    // Facial expression
-
-    $("brows").setAttribute(
-
-        "opacity",
-
-        state === "THINKING"
-
-        || state === "LISTENING"
-
-        ? "0.8"
-
-        : "0"
-
-    );
-
-}
-
-
-requestAnimationFrame(animate);
+);
 
 
 // =========================================
-// MICROPHONE PRIVACY
+// PRIVACY CLEANUP
 // =========================================
 
 document.addEventListener(
-
     "visibilitychange",
-
     () => {
 
-        if (
+        if (document.hidden) {
 
-            document.hidden
+            audio.pause();
 
-            && (active || starting)
+            if (
+                media?.state === "recording"
+            ) {
 
-        ) {
+                media.onstop = null;
 
-            stopVoice();
+                media.stop();
+
+            }
+
+            releaseMic();
 
         }
 
     }
-
 );
 
 
 window.addEventListener(
-
     "pagehide",
-
-    () => {
-
-        clearInterval(voiceTimer);
-
-        clearTimeout(replyTimer);
-
-        cancelHold();
-
-        stopVoice();
-
-        audioContext?.close().catch(
-
-            () => {}
-
-        );
-
-    }
-
+    releaseMic
 );
 
 
 // =========================================
-// INITIALIZE NOVA
+// INITIALIZE
 // =========================================
 
-setStatus("STANDBY");
-
-
-post(
-
+notify(
     "streamlit:componentReady",
-
     {
-
         apiVersion: 1
-
     }
-
 );
 
-
-resizeFrame();
-
+height();
 
 if (window.ResizeObserver) {
 
     new ResizeObserver(
-
-        resizeFrame
-
+        height
     ).observe(
-
         document.body
-
     );
 
 }
