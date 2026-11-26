@@ -21,6 +21,7 @@ from pypdf import PdfReader
 from docx import Document
 from ddgs import DDGS
 
+
 # ==========================================
 # NOVA SETTINGS
 # ==========================================
@@ -86,6 +87,7 @@ TOPICS = {
     ]
 }
 
+
 # ==========================================
 # SESSION STATE
 # ==========================================
@@ -146,6 +148,7 @@ for key, value in initial.items():
     if key not in S:
         S[key] = value
 
+
 # ==========================================
 # GROQ API
 # ==========================================
@@ -166,6 +169,7 @@ except Exception:
 
     st.stop()
 
+
 MODEL = st.secrets.get(
     "CHAT_MODEL",
     "openai/gpt-oss-20b"
@@ -175,6 +179,7 @@ VISION = st.secrets.get(
     "VISION_MODEL",
     "meta-llama/llama-4-scout-17b-16e-instruct"
 )
+
 
 # ==========================================
 # AI TEXT GENERATION
@@ -231,6 +236,7 @@ def ask_ai(prompt, system="", image=None):
         or ""
     ).strip()
 
+
 # ==========================================
 # TEXT TO SPEECH
 # ==========================================
@@ -261,6 +267,7 @@ async def tts_async(text, language):
         data
     ).decode()
 
+
 def voice_for(text):
 
     try:
@@ -275,6 +282,7 @@ def voice_for(text):
     except Exception:
 
         return ""
+
 
 # ==========================================
 # SPEECH TO TEXT
@@ -332,6 +340,7 @@ def speech_to_text(
         result.text or ""
     ).strip()
 
+
 # ==========================================
 # IMAGE AND DOCUMENTS
 # ==========================================
@@ -361,6 +370,7 @@ def image_data(upload):
     return base64.b64encode(
         buf.getvalue()
     ).decode()
+
 
 def file_text(upload):
 
@@ -407,6 +417,7 @@ def file_text(upload):
 
     return out[:14000]
 
+
 # ==========================================
 # INTERNET SEARCH
 # ==========================================
@@ -438,6 +449,7 @@ def search_web(q):
             "Carian internet tidak berjaya."
         )
 
+
 # ==========================================
 # NOTES STORAGE
 # ==========================================
@@ -449,6 +461,7 @@ def add_note(text):
         S.notes.append(
             text.strip()
         )
+
 
 # ==========================================
 # LESSON PLAN VALIDATION
@@ -545,6 +558,7 @@ def normalize_plan(
 
         "steps": clean
     }
+
 
 # ==========================================
 # GENERATE LIVE WHITEBOARD LESSON
@@ -698,6 +712,7 @@ def make_lesson(subject, topic):
 
     return plan
 
+
 # ==========================================
 # EVALUATE STUDENT WORKING
 # ==========================================
@@ -803,6 +818,7 @@ def grade_step(answer):
 
     )
 
+
 # ==========================================
 # NOVA DARK THEME
 # ==========================================
@@ -872,6 +888,7 @@ st.markdown("""
 
 </style>
 """, unsafe_allow_html=True)
+
 
 # ==========================================
 # SIDEBAR
@@ -947,9 +964,11 @@ with st.sidebar:
         "history are session-only until exported."
     )
 
+
 robot_mode = S.mode == "Robot Voice"
 
 academy_mode = S.mode == "SPM Academy"
+
 
 if S.get("previous_mode") != S.mode:
 
@@ -962,12 +981,14 @@ if S.get("previous_mode") != S.mode:
 
     S.previous_mode = S.mode
 
+
 st.title("✦ NOVA")
 
 st.caption(
     "Intelligent learning companion "
     "• Developed by Idlan"
 )
+
 
 # ==========================================
 # MODE 2 — ROBOT VOICE
@@ -1094,6 +1115,7 @@ if robot_mode:
             "V16 diperlukan untuk Robot Voice."
         )
 
+
 # ==========================================
 # MODE 3 — SPM ACADEMY
 # ==========================================
@@ -1164,6 +1186,7 @@ if academy_mode:
 
         S.plan = None
 
+
     # START NEW LESSON
 
     if st.button(
@@ -1220,6 +1243,7 @@ if academy_mode:
             add_note(lesson_note)
 
         st.rerun()
+
 
     # DISPLAY WHITEBOARD
 
@@ -1394,6 +1418,7 @@ if academy_mode:
                 "whiteboard/index.html."
             )
 
+
         # EVALUATE STUDENT WORK
 
         st.markdown(
@@ -1475,6 +1500,7 @@ if academy_mode:
             "formatif, bukan markah rasmi SPM."
         )
 
+
 # ==========================================
 # MODE 1 — STANDARD CHAT
 # ==========================================
@@ -1490,6 +1516,7 @@ if S.mode == "AI Chat":
             st.markdown(
                 msg["content"]
             )
+
 
 # ==========================================
 # UNIVERSAL PLUS MENU
@@ -1582,6 +1609,7 @@ with st.container(key="plus"):
             st.markdown(
                 "**" + S.tool + "**"
             )
+
 
         # CAMERA, PHOTOS, DOCUMENTS
 
@@ -1689,6 +1717,7 @@ with st.container(key="plus"):
 
                 st.rerun()
 
+
         # DEEP SEARCH
 
         elif S.tool == "Deep Search":
@@ -1699,6 +1728,7 @@ with st.container(key="plus"):
 
                 key="search"
             )
+
 
         # RESEARCH / CODING / ROBOTICS
 
@@ -1716,6 +1746,7 @@ with st.container(key="plus"):
                 + S.assistant_type
             )
 
+
         # SPM ACADEMY
 
         elif S.tool == "SPM Academy":
@@ -1729,6 +1760,7 @@ with st.container(key="plus"):
                 S.tool = "Home"
 
                 st.rerun()
+
 
         # MANUAL VOICE INPUT
 
@@ -1794,6 +1826,7 @@ with st.container(key="plus"):
 
                     st.rerun()
 
+
         # BACK
 
         if S.tool != "Home":
@@ -1805,6 +1838,7 @@ with st.container(key="plus"):
                 S.tool = "Home"
 
                 st.rerun()
+
 
 # ==========================================
 # MODE 1 MESSAGE INPUT
@@ -1863,6 +1897,7 @@ if S.mode == "AI Chat":
 
         st.rerun()
 
+
 # ==========================================
 # SAVE LESSON NOTES
 # ==========================================
@@ -1916,6 +1951,7 @@ if S.notes:
         S.notes = []
 
         st.rerun()
+
 
 st.caption(
     "NOVA V17 • Developed by Idlan "
