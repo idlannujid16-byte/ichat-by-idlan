@@ -1,0 +1,697 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NOVA V18 Simple AI Classroom</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:transparent;
+  color:#eaf6ff;
+  font:14px system-ui,Arial;
+}
+main{
+  border:1px solid #35536e;
+  background:linear-gradient(145deg,#142437,#0b1422);
+  border-radius:22px;
+  padding:16px;
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+h2{font-size:20px;margin:0}
+.sub{color:#acc4d9;font-size:12px;margin-top:5px}
+#status{color:#86dcff;font-size:12px}
+.board{
+  min-height:255px;
+  margin:16px 0 12px;
+  padding:22px;
+  border-radius:16px;
+  color:#213d59;
+  background:#f5f8fd;
+  box-shadow:inset 0 0 14px #d5e0ee;
+}
+#stepTitle{
+  font-size:12px;
+  color:#4c7290;
+  font-weight:700;
+}
+#written{
+  font:600 clamp(20px,4.5vw,30px)/1.6
+       ui-monospace,Consolas,monospace;
+  min-height:140px;
+  margin-top:25px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.progress{
+  height:6px;
+  border-radius:6px;
+  background:#d6e4f0;
+  overflow:hidden;
+}
+#fill{
+  background:#268cbd;
+  width:0;
+  height:100%;
+}
+#narration{
+  background:#1b344a;
+  border:1px solid #355771;
+  border-radius:13px;
+  padding:14px;
+  min-height:75px;
+  line-height:1.7;
+}
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:13px 0;
+}
+button{
+  background:#29445c;
+  color:#e8f6ff;
+  border:1px solid #547c9e;
+  border-radius:12px;
+  padding:12px 17px;
+  font:600 13px system-ui;
+  cursor:pointer;
+}
+button.primary{
+  background:#146b93;
+  border-color:#70d4ff;
+}
+button.ask{
+  background:#633649;
+  border-color:#c27f9c;
+}
+button:disabled{opacity:.5}
+audio{width:100%;margin:8px 0}
+#askPanel{
+  background:#172d40;
+  border:1px solid #407493;
+  border-radius:15px;
+  padding:14px;
+  margin-top:13px;
+}
+textarea{
+  width:100%;
+  min-height:80px;
+  padding:12px;
+  border-radius:10px;
+  background:#091724;
+  color:#fff;
+  border:1px solid #4b738b;
+  font:14px system-ui;
+  resize:vertical;
+}
+#answer{
+  background:#25445b;
+  border-radius:10px;
+  padding:13px;
+  white-space:pre-wrap;
+  line-height:1.7;
+  margin:12px 0;
+}
+footer{
+  color:#98afc6;
+  font-size:11px;
+  margin-top:12px;
+}
+[hidden]{display:none!important}
+</style>
+</head>
+
+<body>
+<main>
+<header>
+  <div>
+    <h2>✎ NOVA AI Classroom</h2>
+    <div class="sub" id="heading">
+      Your personal AI teacher
+    </div>
+  </div>
+  <span id="status">Ready</span>
+</header>
+
+<section class="board">
+  <div id="stepTitle">Ready to learn</div>
+  <div id="written">
+    Pilih subjek dan tekan Start Learning.
+  </div>
+  <div class="progress">
+    <div id="fill"></div>
+  </div>
+</section>
+
+<div id="narration">
+  NOVA akan menerangkan pelajaran
+  sambil menulis langkah demi langkah.
+</div>
+
+<audio id="lessonAudio" controls hidden></audio>
+
+<div class="controls">
+  <button id="mainButton" class="primary">
+    ▶ Start Learning
+  </button>
+  <button id="askButton" class="ask">
+    ✋ Ask NOVA
+  </button>
+</div>
+
+<section id="askPanel" hidden>
+  <div class="sub" id="micStatus">
+    Lesson paused. Tanya apa yang tidak faham.
+  </div>
+
+  <textarea
+    id="question"
+    placeholder="Kenapa langkah ini digunakan?"
+  ></textarea>
+
+  <div class="controls">
+    <button id="sendQuestion">Send Question</button>
+    <button id="recordVoice">🎙 Record Voice</button>
+    <button id="sendRecording" hidden>
+      ■ Send Recording
+    </button>
+  </div>
+
+  <div id="answer" hidden></div>
+
+  <audio id="answerAudio" controls hidden></audio>
+
+  <div class="controls">
+    <button id="continueButton" class="primary">
+      ▶ Continue Lesson
+    </button>
+  </div>
+</section>
+
+<footer>
+  NOVA V18 • Developed by Idlan
+  • Browser autoplay may require one tap
+</footer>
+</main>
+
+<script>
+"use strict";
+
+const $=id=>document.getElementById(id);
+const lessonAudio=$("lessonAudio");
+const answerAudio=$("answerAudio");
+
+let plan=null;
+let planId="";
+let stepIndex=0;
+let asking=false;
+let waiting=false;
+let playing=false;
+let seenReply="";
+let lessonGeneration=0;
+let micStream=null;
+let recorder=null;
+let recordingTimer=null;
+let autoTimer=null;
+
+function host(type,extra={}){
+  parent.postMessage({
+    isStreamlitMessage:true,
+    type,...extra
+  },"*");
+}
+
+function resize(){
+  host("streamlit:setFrameHeight",{
+    height:document.body.scrollHeight+8
+  });
+}
+
+function setStatus(text){
+  $("status").textContent=text;
+}
+
+function currentStep(){
+  return plan?.steps?.[stepIndex]||null;
+}
+
+function progress(value){
+  if(!currentStep())return;
+
+  const text=currentStep().write;
+  const p=Math.max(0,Math.min(1,value));
+  const count=Math.floor(text.length*p);
+
+  $("written").textContent=
+    text.slice(0,count)+(count<text.length?"▌":"");
+
+  $("fill").style.width=Math.round(p*100)+"%";
+}
+
+function loadStep(index){
+  if(!plan)return;
+
+  lessonGeneration++;
+  clearTimeout(autoTimer);
+
+  lessonAudio.pause();
+  lessonAudio.removeAttribute("src");
+  lessonAudio.load();
+  lessonAudio.hidden=true;
+
+  stepIndex=Math.max(
+    0,Math.min(plan.steps.length-1,index)
+  );
+
+  const s=currentStep();
+
+  $("stepTitle").textContent=
+    `LANGKAH ${stepIndex+1}/${plan.steps.length} • ${s.title}`;
+
+  $("narration").textContent="🤖 NOVA: "+s.say;
+
+  progress(0);
+  playing=false;
+  $("mainButton").textContent="▶ Play Lesson";
+  setStatus("Ready");
+  resize();
+}
+
+async function playLesson(){
+  if(!plan||asking||waiting)return;
+
+  const s=currentStep();
+
+  if(
+    lessonAudio.getAttribute("src") &&
+    lessonAudio.currentTime>0 &&
+    !lessonAudio.ended
+  ){
+    try{
+      await lessonAudio.play();
+      return;
+    }catch(e){}
+  }
+
+  if(!s.audio){
+    progress(1);
+    setStatus("Voice unavailable");
+    $("mainButton").textContent="▶ Next Step";
+    return;
+  }
+
+  lessonAudio.src="data:audio/mpeg;base64,"+s.audio;
+  lessonAudio.hidden=false;
+
+  try{
+    await lessonAudio.play();
+    playing=true;
+    setStatus("NOVA speaking");
+    $("mainButton").textContent="Ⅱ Pause";
+  }catch(e){
+    setStatus("Tap audio Play");
+    $("mainButton").textContent="▶ Play Voice";
+  }
+
+  resize();
+}
+
+$("mainButton").onclick=()=>{
+  if(!plan||asking)return;
+
+  if(!lessonAudio.paused){
+    lessonAudio.pause();
+    playing=false;
+    setStatus("Paused");
+    $("mainButton").textContent="▶ Continue";
+    return;
+  }
+
+  const complete=
+    lessonAudio.ended ||
+    (!lessonAudio.getAttribute("src") &&
+     $("fill").style.width==="100%");
+
+  if(complete){
+    loadStep(
+      stepIndex+1<plan.steps.length
+        ?stepIndex+1:0
+    );
+  }
+
+  playLesson();
+};
+
+lessonAudio.addEventListener("play",()=>{
+  playing=true;
+  setStatus("NOVA speaking");
+  $("mainButton").textContent="Ⅱ Pause";
+});
+
+lessonAudio.addEventListener("pause",()=>{
+  if(!lessonAudio.ended&&playing){
+    playing=false;
+    $("mainButton").textContent="▶ Continue";
+  }
+});
+
+lessonAudio.addEventListener("timeupdate",()=>{
+  if(
+    Number.isFinite(lessonAudio.duration) &&
+    lessonAudio.duration>0
+  ){
+    progress(
+      lessonAudio.currentTime/lessonAudio.duration
+    );
+  }
+});
+
+lessonAudio.addEventListener("ended",()=>{
+  playing=false;
+  progress(1);
+  setStatus("Step complete");
+
+  $("mainButton").textContent=
+    stepIndex===plan.steps.length-1
+      ?"↻ Repeat Lesson":"▶ Next Step";
+
+  const token=lessonGeneration;
+
+  if(!asking&&stepIndex<plan.steps.length-1){
+    autoTimer=setTimeout(()=>{
+      if(
+        token!==lessonGeneration||
+        asking||waiting
+      )return;
+
+      loadStep(stepIndex+1);
+      playLesson();
+    },600);
+  }
+});
+
+
+// ===================================
+// INTERRUPT AND ASK
+// ===================================
+
+$("askButton").onclick=()=>{
+  if(!plan)return;
+
+  lessonGeneration++;
+  clearTimeout(autoTimer);
+  lessonAudio.pause();
+  answerAudio.pause();
+
+  asking=true;
+
+  $("askPanel").hidden=false;
+  $("mainButton").disabled=true;
+  $("askButton").disabled=true;
+
+  setStatus("Paused — ask NOVA");
+  resize();
+};
+
+function sendQuestion(payload){
+  if(waiting)return;
+
+  waiting=true;
+
+  $("sendQuestion").disabled=true;
+  $("recordVoice").disabled=true;
+  $("micStatus").textContent=
+    "NOVA sedang menjawab...";
+
+  const id=
+    crypto.randomUUID?.()||
+    Date.now()+"-"+Math.random();
+
+  host("streamlit:setComponentValue",{
+    value:{
+      type:"question",
+      id,
+      plan_id:planId,
+      step:stepIndex,
+      ...payload
+    },
+    dataType:"json"
+  });
+}
+
+$("sendQuestion").onclick=()=>{
+  const text=$("question").value.trim();
+  if(text)sendQuestion({text});
+};
+
+
+// ===================================
+// MICROPHONE INTERRUPTION
+// ===================================
+
+function stopMic(){
+  clearTimeout(recordingTimer);
+  recordingTimer=null;
+
+  micStream?.getTracks().forEach(t=>t.stop());
+  micStream=null;
+  recorder=null;
+
+  $("recordVoice").hidden=false;
+  $("sendRecording").hidden=true;
+}
+
+$("recordVoice").onclick=async()=>{
+  if(waiting)return;
+
+  try{
+    micStream=
+      await navigator.mediaDevices.getUserMedia({
+        audio:{
+          echoCancellation:true,
+          noiseSuppression:true
+        }
+      });
+
+    const formats=[
+      "audio/webm;codecs=opus",
+      "audio/mp4",
+      "audio/webm",
+      "audio/ogg"
+    ];
+
+    const mime=formats.find(t=>
+      MediaRecorder.isTypeSupported(t)
+    );
+
+    const chunks=[];
+
+    const rec=new MediaRecorder(
+      micStream,mime?{mimeType:mime}:{}
+    );
+    recorder=rec;
+
+    rec.ondataavailable=e=>{
+      if(e.data.size)chunks.push(e.data);
+    };
+
+    rec.onstop=async()=>{
+      const actual=
+        rec.mimeType||chunks[0]?.type||
+        "audio/webm";
+
+      const blob=new Blob(chunks,{type:actual});
+      stopMic();
+
+      if(!blob.size)return;
+
+      try{
+        const b64=await new Promise(
+          (resolve,reject)=>{
+            const reader=new FileReader();
+
+            reader.onload=()=>resolve(
+              String(reader.result).split(",")[1]
+            );
+
+            reader.onerror=reject;
+            reader.readAsDataURL(blob);
+          }
+        );
+
+        sendQuestion({
+          audio:b64,
+          mime:actual
+        });
+      }catch(e){
+        $("micStatus").textContent=
+          "Rakaman gagal. Cuba taip soalan.";
+      }
+    };
+
+    rec.start();
+
+    $("recordVoice").hidden=true;
+    $("sendRecording").hidden=false;
+    $("micStatus").textContent=
+      "Recording... Tekan Send Recording.";
+
+    recordingTimer=setTimeout(()=>{
+      if(rec.state==="recording")rec.stop();
+    },18000);
+
+  }catch(e){
+    stopMic();
+    $("micStatus").textContent=
+      "Mikrofon tidak tersedia. Taip soalan.";
+  }
+};
+
+$("sendRecording").onclick=()=>{
+  if(recorder?.state==="recording"){
+    recorder.stop();
+  }
+};
+
+
+// ===================================
+// CONTINUE LESSON
+// ===================================
+
+$("continueButton").onclick=()=>{
+  if(recorder?.state==="recording"){
+    recorder.onstop=null;
+    recorder.stop();
+  }
+
+  stopMic();
+  answerAudio.pause();
+
+  asking=false;
+  waiting=false;
+
+  $("askPanel").hidden=true;
+  $("mainButton").disabled=false;
+  $("askButton").disabled=false;
+  $("sendQuestion").disabled=false;
+  $("recordVoice").disabled=false;
+
+  $("answer").hidden=true;
+  answerAudio.hidden=true;
+  answerAudio.removeAttribute("src");
+
+  setStatus("Continuing");
+  playLesson();
+  resize();
+};
+
+
+// ===================================
+// RECEIVE STREAMLIT DATA
+// ===================================
+
+window.addEventListener("message",e=>{
+  if(
+    e.source!==parent||
+    e.data?.type!=="streamlit:render"
+  )return;
+
+  const a=e.data.args||{};
+
+  if(a.plan_id&&a.plan_id!==planId){
+    planId=a.plan_id;
+    plan=a.plan;
+    asking=false;
+    waiting=false;
+    seenReply="";
+
+    $("heading").textContent=
+      `${plan.subject} • ${plan.topic}`;
+
+    $("askPanel").hidden=true;
+    $("mainButton").disabled=false;
+    $("askButton").disabled=false;
+
+    loadStep(0);
+
+    // Attempt autoplay on new lesson.
+    // A browser may require a manual Play tap.
+    playLesson();
+  }
+
+  if(
+    a.reply?.id &&
+    a.reply.id!==seenReply &&
+    a.plan_id===planId
+  ){
+    seenReply=a.reply.id;
+    waiting=false;
+
+    $("sendQuestion").disabled=false;
+    $("recordVoice").disabled=false;
+    $("answer").hidden=false;
+    $("answer").textContent=a.reply.text||"";
+
+    $("micStatus").textContent=
+      "NOVA sudah menjawab. Tekan Continue Lesson.";
+
+    $("question").value="";
+
+    if(a.reply.audio){
+      answerAudio.src=
+        "data:audio/mpeg;base64,"+a.reply.audio;
+      answerAudio.hidden=false;
+      answerAudio.play().catch(()=>{});
+    }
+
+    resize();
+  }
+
+  resize();
+});
+
+
+// ===================================
+// CLEANUP
+// ===================================
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){
+    lessonAudio.pause();
+    answerAudio.pause();
+
+    if(recorder?.state==="recording"){
+      recorder.onstop=null;
+      recorder.stop();
+    }
+    stopMic();
+  }
+});
+
+window.addEventListener("pagehide",()=>{
+  clearTimeout(autoTimer);
+  lessonAudio.pause();
+  answerAudio.pause();
+  stopMic();
+});
+
+host("streamlit:componentReady",{apiVersion:1});
+resize();
+
+if(window.ResizeObserver){
+  new ResizeObserver(resize).observe(
+    document.body
+  );
+}
+</script>
+</body>
+</html>
