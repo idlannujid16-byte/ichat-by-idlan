@@ -1,7 +1,8 @@
-streamlit>=1.54,<2
+
+streamlit>=1.54,<1.56
 groq>=0.11
-ddgs>=9
 edge-tts>=7
+Pillow>=10
 pypdf>=5
 python-docx>=1.1
-Pillow>=10
+ddgs>=9
